@@ -20,19 +20,19 @@ make
 Please use the following BibTeX entry to cite our work in academic papers.
 
 ```tex
-    @article{APIR,
-      author    = {Lukas Helminger and
-                  Daniel Kales and
-                  Christian Rechberger and
-                  Roman Walch},
-      title     = {Aggregated Private Information Retrieval: {A} First Practical Implementation
-                  to Support Large-Scale Disease Analytics},
-      journal   = {CoRR},
-      volume    = {abs/2005.02061},
-      year      = {2020}
-    }
+@article{APIR,
+  author    = {Lukas Helminger and
+              Daniel Kales and
+              Christian Rechberger and
+              Roman Walch},
+  title     = {Aggregated Private Information Retrieval: {A} First Practical Implementation
+              to Support Large-Scale Disease Analytics},
+  journal   = {CoRR},
+  volume    = {abs/2005.02061},
+  year      = {2020}
+}
 ```
 
 
-[1] https://eprint.iacr.org/2020/522
+[1] https://eprint.iacr.org/2020/522 <br/>
 [2] https://arxiv.org/abs/2005.02061
