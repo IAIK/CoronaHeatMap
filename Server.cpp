@@ -114,7 +114,7 @@ void Server::babystep_giantstep(Ciphertext& state,
   for (uint64_t j = 1; j < bsgs_n1; j++)
     evaluator.rotate_rows(rot[j - 1], 1, galois_keys, rot[j]);
 
-  for (uint64_t l = 0; l < bsgs_n1; l++) {
+  for (uint64_t l = 0; l < bsgs_n2; l++) {
     evaluator.multiply_plain(rot[0], matrix[l * bsgs_n1], inner_sum);
     for (uint64_t j = 1; j < bsgs_n1; j++) {
       evaluator.multiply_plain(rot[j], matrix[l * bsgs_n1 + j], temp);
