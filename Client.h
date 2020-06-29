@@ -18,7 +18,7 @@ class Client {
 
     seal::GaloisKeys galois_keys;
     seal::SecretKey secret_key;
-    seal::RelinKeys relin_keys;
+    // seal::RelinKeys relin_keys;
 
     seal::Encryptor encryptor;
     seal::Evaluator evaluator;
@@ -33,9 +33,9 @@ class Client {
     uint64_t num_challenges;
     uint64_t plain_mod;
 
-    static const std::map<size_t, std::vector<seal::SmallModulus>> default_coeff_modulus_80;
+    static const std::map<size_t, std::vector<seal::Modulus>> default_coeff_modulus_80;
 
-    static std::vector<seal::SmallModulus> BFV_80bit(size_t);
+    static std::vector<seal::Modulus> BFV_80bit(size_t);
 
     void get_bsgs_params(uint64_t& bsgs_n1, uint64_t& bsgs_n2) const;
 
@@ -58,7 +58,7 @@ class Client {
     uint64_t get_slots() const;
 
     seal::GaloisKeys& get_galois_keys();
-    seal::RelinKeys& get_relin_keys();
+    seal::RelinKeys get_relin_keys();
 
     void set_dimension(uint64_t N, uint64_t k);
 

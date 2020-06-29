@@ -49,8 +49,10 @@ int main() {
 
   Server server(context, PPA_PARAM::PLAIN_MODULUS, PPA_PARAM::USE_BSGS);
   server.set_gk(client.get_galois_keys());
-  if (PPA_PARAM::MASKING || PPA_PARAM::NUM_MASKS > 0)
-    server.set_rk(client.get_relin_keys());
+  if (PPA_PARAM::MASKING || PPA_PARAM::NUM_MASKS > 0) {
+    auto rlk = client.get_relin_keys();
+    server.set_rk(rlk);
+  }
   server.set_num_threads(PPA_PARAM::NUM_THREADS);
   server.set_dimension(PPA_PARAM::N, PPA_PARAM::k);
   server.activate_diff_priv(PPA_PARAM::DIFF_PRIV, PPA_PARAM::SENSITIVITY, PPA_PARAM::EPSILON);

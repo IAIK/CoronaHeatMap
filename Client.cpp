@@ -7,7 +7,7 @@ using namespace seal;
 
 //----------------------------------------------------------------
 
-const std::map<size_t, std::vector<seal::SmallModulus>> Client::default_coeff_modulus_80
+const std::map<size_t, std::vector<seal::Modulus>> Client::default_coeff_modulus_80
           {
               /*
               Polynomial modulus: 1x^4096 + 1
@@ -36,14 +36,15 @@ const std::map<size_t, std::vector<seal::SmallModulus>> Client::default_coeff_mo
 
 Client::Client(std::shared_ptr<seal::SEALContext> con, uint64_t p_mod, bool to_file)
       : context(con), keygen(context), secret_key(keygen.secret_key()),
-        relin_keys(keygen.relin_keys()), encryptor(context, secret_key),
+        encryptor(context, secret_key),
         evaluator(context), decryptor(context, secret_key), encoder(context),
         slots(encoder.slot_count()), plain_mod(p_mod)
 {
   if (to_file) {
     std::ofstream rk;
     rk.open(RK_FILE);
-    keygen.relin_keys_save(rk);
+    auto rlk = keygen.relin_keys();
+    rlk.save(rk);
 
     std::ofstream sk;
     sk.open(SK_FILE);
@@ -55,7 +56,7 @@ Client::Client(std::shared_ptr<seal::SEALContext> con, uint64_t p_mod, bool to_f
 
 Client::Client(std::shared_ptr<seal::SEALContext> con, uint64_t p_mod, seal::SecretKey& sk)
       : context(con), keygen(context), secret_key(sk),
-        relin_keys(keygen.relin_keys()), encryptor(context, secret_key),
+        encryptor(context, secret_key),
         evaluator(context), decryptor(context, secret_key), encoder(context),
         slots(encoder.slot_count()), plain_mod(p_mod)
 {
@@ -240,15 +241,16 @@ void Client::create_gk(uint64_t challenges, bool masking, bool use_bsgs, bool to
   if (to_file) {
     std::ofstream gk;
     gk.open(GK_FILE);
-    keygen.galois_keys_save(gks, gk);
+    auto glk = keygen.galois_keys(gks);
+    glk.save(gk);
   }
   else
-    galois_keys = keygen.galois_keys(gks);
+    galois_keys = keygen.galois_keys_local(gks);
 }
 
 //----------------------------------------------------------------
 
-std::vector<seal::SmallModulus> Client::BFV_80bit(size_t poly_modulus_degree) {
+std::vector<seal::Modulus> Client::BFV_80bit(size_t poly_modulus_degree) {
   return default_coeff_modulus_80.at(poly_modulus_degree);
 }
 
@@ -278,8 +280,8 @@ seal::GaloisKeys& Client::get_galois_keys() {
 
 //----------------------------------------------------------------
 
-seal::RelinKeys& Client::get_relin_keys() {
-  return relin_keys;
+seal::RelinKeys Client::get_relin_keys() {
+  return keygen.relin_keys_local();
 }
 
 //----------------------------------------------------------------
@@ -350,7 +352,8 @@ uint64_t Client::encrypt_to_file(std::vector<uint64_t>& input) {
     plain.resize(slots, 0); // pad with zero
     Plaintext plain_enc;
     encoder.encode(plain, plain_enc);
-    encryptor.encrypt_symmetric_save(plain_enc, c);
+    auto ct = encryptor.encrypt_symmetric(plain_enc);
+    ct.save(c);
   }
 
   std::ofstream h;
