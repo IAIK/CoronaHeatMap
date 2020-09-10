@@ -1,22 +1,20 @@
-#import heatMap
 
-import dataWidget
-import networkDialog
-import requestWidget
-from heatMap import HeatMapApp
-from customSocket import CustomSocket
-from functools import partial
 
-import sys
-import socket
 import csv
-import bisect
-import threading
+import socket
+import sqlite3
+import sys
 
 from PyQt5 import QtWidgets, QtCore
 from PyQt5.QtWidgets import QApplication, QMainWindow
 
-import sqlite3
+import startPrompt as sp
+import dataWidget
+import fileDialog
+import networkDialog
+import requestWidget
+import radiusPrompt
+from heatMap import HeatMapApp
 
 
 def sql_fetch(databasePath):
@@ -40,6 +38,7 @@ def readCSV(csv_path, selector):
 class DataSelectorWindow(QMainWindow):
     def __init__(self, parent=None):
         super(DataSelectorWindow, self).__init__(parent)
+        self.numbers = []
         self.installEventFilter(self)
         self.resize(1280, 720)
         self.ip = 'localhost'
@@ -56,11 +55,19 @@ class DataSelectorWindow(QMainWindow):
         self.requestUI.setupUi(self.requestDialog, self)
 
 
-        self.numbers = []
+
         self.dataWidget = None
 #        threading.Thread(target=readCSV, args=("numbers.csv", self)).start()
 
 #        self.readCSV("numbers.csv")
+
+    def start_plain(self):
+        self.dataWidget.start_plain()
+        self.stacked.setEnabled(True)
+
+    def run_enc(self):
+        self.dataWidget.run_plain.setEnabled(False)
+        self.stacked.setEnabled(True)
 
     def eventFilter(self, obj, event):
         if event.type() == QtCore.QEvent.Resize:
@@ -88,12 +95,57 @@ class DataSelectorWindow(QMainWindow):
 
     def acceptFromServer(self):
         print("verarbeite Daten")
-        args = ["/home/fabian/Documents/privacy-preserving-disease-analysis/pythonDemo/backend/client", "dec"]
+        fD = fileDialog.fileDialog()
+        fileName = fD.openDirectoryDialog('Ordner zum speichern der Anfrage')
+        if fileName is None:
+            fileName = 'backend/'
+        else:
+            fileName += '/'
+        del fD
+        args = ["backend/client", "dec", fileName]
         self.requestUI.run_thread(args)
         self.requestDialog.show()
         self.stacked.setCurrentIndex(1)
         self.stacked.setEnabled(False)
 
+    def run_plain(self):
+        indices = []
+
+        numbers = self.dataWidget.tableWidget.selectedNumbers()
+        print(len(self.numbers))
+        print(len(self.dataWidget.tableWidget.selectedNumbers()))
+        for number in numbers:
+            #            bisect.insort(self.numbers, str(number))
+            indices += [self.numbers.index(str(number))]
+        indices.sort()
+        print(len(indices))
+        #        indices += [0]
+        index = 0
+
+        hot_file = 'data/oneHot.csv'
+
+        print(indices)
+        print("writing file")
+        with open(hot_file, "w") as csv_file:
+            for n, i in enumerate(self.numbers):
+                if i in numbers:
+                    csv_file.write(str(1))
+                else:
+                    csv_file.write(str(0))
+                #            for i in range(len(self.numbers)):
+                #                if index < len(indices) and indices[index] == i:
+                #                    csv_file.write(str(1))
+                #                    index += 1
+                #                else:
+                #                    csv_file.write(str(0))
+                if n != len(self.numbers) - 1:
+                    csv_file.write(",")
+        print("closed file")
+        args = ["backend/plain"]
+        self.requestUI.run_thread(args)
+        self.requestDialog.show()
+        self.stacked.setCurrentIndex(1)
+        self.stacked.setEnabled(False)
 
     def connect(self):
         self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -118,9 +170,18 @@ class DataSelectorWindow(QMainWindow):
         print(len(indices))
 #        indices += [0]
         index = 0
+        fD = fileDialog.fileDialog()
+        fileName = fD.openDirectoryDialog('Ordner zum speichern der Anfrage')
+        if fileName is None:
+            fileName = ''
+        else:
+            fileName += '/'
+
+        hot_file = 'data/oneHot.csv'
+
         print(indices)
         print("writing file")
-        with open("data/oneHot.csv", "w") as csv_file:
+        with open(hot_file, "w") as csv_file:
             for n, i in enumerate(self.numbers):
                 if i in numbers:
                     csv_file.write(str(1))
@@ -135,7 +196,8 @@ class DataSelectorWindow(QMainWindow):
                 if n != len(self.numbers) - 1:
                     csv_file.write(",")
         print("closed file")
-        args = ["/home/fabian/Documents/privacy-preserving-disease-analysis/pythonDemo/backend/client", "enc"]
+        print(fileName)
+        args = ["backend/client", "enc", fileName, "data/"]
         self.requestUI.run_thread(args)
         self.requestDialog.show()
         self.stacked.setEnabled(False)
@@ -156,7 +218,13 @@ def main():
     form_ui = QtWidgets.QWidget()
 
     ui_form = dataWidget.Ui_Form()
-    ui_form.setupUi(form_ui, window)
+    ui_form.setupUi(form_ui, window, 100011)
+    dialog = QtWidgets.QDialog(window)
+    start_prompt = sp.Ui_Dialog()
+    start_prompt.setupUi(dialog, window)
+    window.stacked.setEnabled(False)
+    dialog.show()
+    #window.setEnabled(True)
     heatMap = HeatMapApp(window)
     window.addQWidget(ui_form, form_ui, 'data')
     window.stacked.addWidget(heatMap)

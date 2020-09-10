@@ -1,10 +1,13 @@
 import sys
 
 from PyQt5 import QtWidgets, QtCore
-import serverWidget
 from PyQt5.QtWidgets import QMainWindow, QApplication
-from customSocket import CustomSocket
+
 import requestWidget
+import fileDialog
+
+
+import serverWidget
 
 
 class ServerWindow(QMainWindow):
@@ -53,8 +56,18 @@ class ServerWindow(QMainWindow):
         pass
 
     def ProcessRequest(self):
-        args = ["/home/fabian/Documents/privacy-preserving-disease-analysis/pythonDemo/backend/server",
-                str(self.main_window.radius_slider.value()), str(self.main_window.privacy_level.value())]
+        fD = fileDialog.fileDialog()
+        fileName = fD.openDirectoryDialog('Ordner zum einlesen der Anfrage')
+        if fileName is None:
+            fileName = 'backend/'
+        else:
+            fileName += '/'
+        args = ["backend/server",
+                str(self.main_window.radius_slider.value()),
+                str(self.main_window.privacy_level.value()),
+                fileName,
+                fileName
+                ]
         self.requestUI.setupUi(self.requestDialog, self)
         self.requestUI.run_thread(args)
         self.requestDialog.show()

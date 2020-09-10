@@ -39,7 +39,7 @@ def sql_fetch(databasePath):
 
 
 def drawRegion(m, regionName, weigth=15, opacity=0.7):  # regionName can be any region name (Steiermark, Oberoesterreich etc.)
-    with open('GeoJSONAustria/oesterreich.json', 'r') as f:
+    with open('/GeoJSONAustria/oesterreich.json', 'r') as f:
         austriaGeoData = json.load(f)
         regionBorder = list(filter(lambda x: x['properties']['name'] == regionName, austriaGeoData['features']))[0]['geometry']['coordinates']
         if isinstance(regionBorder[0][0][0], list):
@@ -144,6 +144,7 @@ class HeatMapApp(QWidget):
         self.initMapObject()
         self.numbers = []
         self.locations = []
+        print('data/locationID_mapping')
         self.getLocationMappings('data/locationID_mapping.csv')
 
     def readPlainOut(self, path):
@@ -154,6 +155,7 @@ class HeatMapApp(QWidget):
                     self.numbers += [number]
 
     def getLocationMappings(self, path):
+        print(path)
         with open(path) as f:
             cr = csv.reader(f, delimiter=',')
             li = []

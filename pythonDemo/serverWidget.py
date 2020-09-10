@@ -95,14 +95,14 @@ class Ui_Form(object):
         self.privacy_label.setAlignment(QtCore.Qt.AlignCenter)
         self.ProcessRequestBtn.setGeometry(QtCore.QRect(80, 390, 251, 31))
         self.sendResultBtn.setGeometry(QtCore.QRect(80, 450, 251, 31))
-        self.radius_slider.setMinimum(1)
-        self.radius_slider.setMaximum(15)
+        self.radius_slider.setMinimum(100)
+        self.radius_slider.setMaximum(5100)
         self.privacy_level.setMinimum(1)
-        self.privacy_level.setMaximum(15)
+        self.privacy_level.setMaximum(10)
         self.privacy_level.setTickPosition(QtWidgets.QSlider.TicksBelow)
         self.radius_slider.setTickPosition(QtWidgets.QSlider.TicksBelow)
         self.privacy_level.setTickInterval(1)
-        self.radius_slider.setTickInterval(1)
+        self.radius_slider.setTickInterval(500)
 
         self.ratioList = []
         self.addToRatioList(self.radius_slider)
@@ -128,6 +128,7 @@ class Ui_Form(object):
         self.NetworkBtn.setEnabled(False)
         self.retranslateUi(Form)
         QtCore.QMetaObject.connectSlotsByName(Form)
+        self.sendResultBtn.setEnabled(False)
 
     def addToRatioList(self, obj: QtWidgets.QWidget):
         rect = obj.geometry()

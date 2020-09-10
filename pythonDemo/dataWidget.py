@@ -6,18 +6,21 @@
 #
 # WARNING! All changes made in this file will be lost!
 import sqlite3
-
+import csv
+import pickle
+from server import phoneNumberGen
+from random import choice
 from PyQt5 import QtCore, QtGui, QtWidgets
 from PyQt5.QtGui import QPalette
 
 
 class Ui_Form(object):
-    def setupUi(self, Form, window):
+    def setupUi(self, Form, window, amount=0):
         Form.setObjectName("Form")
         Form.resize(1280, 720)
         self.window = window
         self.radio_state = {'manual': True, 'region': False}
-        self.tableWidget = PatientTable(Form)
+        self.tableWidget = PatientTable(Form, amount)
         self.tableWidget.setGeometry(QtCore.QRect(550, 170, 1301, 871))
         self.tableWidget.setMidLineWidth(0)
         self.tableWidget.setObjectName("DataTable")
@@ -42,6 +45,10 @@ class Ui_Form(object):
         self.conf_selection.setGeometry(QtCore.QRect(40, 990, 201, 31))
         self.conf_selection.setObjectName("conf_selection")
         self.conf_selection.clicked.connect(self.confirmSelection)
+        self.run_plain = QtWidgets.QPushButton(Form)
+        self.run_plain.setGeometry(QtCore.QRect(170, 870, 201, 31))
+        self.run_plain.setObjectName("run_plain")
+        self.run_plain.clicked.connect(self.plain)
         self.reset_selection = QtWidgets.QPushButton(Form)
         self.reset_selection.setGeometry(QtCore.QRect(290, 990, 201, 31))
         self.reset_selection.setObjectName("reset_selection")
@@ -85,6 +92,8 @@ class Ui_Form(object):
                                        'xpos': 40/1920, 'ypos': 990/1080, 'xratio': 230 / 1920, 'yratio': 31 / 1080}
         self.reset_selectionRatio =   {'obj': self.reset_selection,
                                        'xpos': 290/1920, 'ypos': 990/1080, 'xratio': 230 / 1920, 'yratio': 31 / 1080}
+        self.run_plainRatio =         {'obj': self.run_plain,
+                                       'xpos': 150/1920, 'ypos': 870/1080, 'xratio': 270/1920, 'yratio': 31/1080}
         self.network_selectionRatio = {'obj': self.network_selection,
                                        'xpos': 150/1920, 'ypos': 730/1080, 'xratio': 270 / 1920, 'yratio': 31 / 1080}
         self.accept_responseRatio = {'obj': self.accept_response,
@@ -95,7 +104,7 @@ class Ui_Form(object):
 
         self.ratioList = [self.tableRatio, self.labelRatio, self.selection_groupRatio, self.region_radioRatio,
                           self.manual_radioRatio, self.conf_selectionRatio, self.reset_selectionRatio,
-                          self.network_selectionRatio, self.accept_responseRatio, self.network_selectionRatio, self.county_selectorRatio]
+                          self.network_selectionRatio, self.accept_responseRatio, self.network_selectionRatio, self.county_selectorRatio, self.run_plainRatio]
         self.resize(Form.width(), Form.height())
         self.retranslateUi(Form)
         QtCore.QMetaObject.connectSlotsByName(Form)
@@ -109,6 +118,7 @@ class Ui_Form(object):
         self.region_radio.setText("Auswahl nach Region")
         self.manual_radio.setText("Manuelle Auswahl")
         self.conf_selection.setText("Auswahl bestätigen")
+        self.run_plain.setText("Run Protocol in plain")
         self.network_selection.setText("Netzwerkeinstellungen")
         self.accept_response.setText("Antwort verarbeiten")
         self.reset_selection.setText("Auswahl zurücksetzen")
@@ -128,6 +138,12 @@ class Ui_Form(object):
         self.tableWidget.disableSelection()
         self.label.setAlignment(QtCore.Qt.AlignCenter)
 
+
+    def start_plain(self):
+        self.accept_response.setEnabled(False)
+        self.conf_selection.setEnabled(False)
+        self.reset_selection.setEnabled(False)
+
     def resize(self, width, height):
         print("resizing to", width, height)
         for ratio in self.ratioList:
@@ -137,6 +153,9 @@ class Ui_Form(object):
 
     def clear(self):
         self.tableWidget.clearSelection()
+
+    def plain(self):
+        self.window.run_plain()
 
     def regionChange(self):
         print('region ', self.radio_state['region'])
@@ -171,11 +190,23 @@ class Ui_Form(object):
         pass
 
 
+def read_csv(filename, col, li: list, delimiter):
+    with open(filename) as csv_file:
+        cr = csv.reader(csv_file, delimiter=delimiter)
+        for row in cr:
+            li += [row[col]]
+
+
 class PatientTable(QtWidgets.QTableWidget):
-    def __init__(self, parent=None):
+    def __init__(self, parent=None, amount=0):
         super(PatientTable, self).__init__(parent)
+        self.parent = parent
+        if amount == 0:
+            self.initData('data/patients.sqlite')
+        else:
+            self.initRandom(amount)
         self.setSelectionBehavior(QtWidgets.QTableWidget.SelectRows)
-        self.initData('data/patients.sqlite')
+        #
         self.setColumnCount(len(self.data[0]))
         [self.horizontalHeader().setSectionResizeMode(i, QtWidgets.QHeaderView.Stretch) for i in range(len(self.data[0]))]
         self.setRowCount(0)
@@ -209,6 +240,22 @@ class PatientTable(QtWidgets.QTableWidget):
         curserObj.execute('SELECT * FROM patients')
         self.data = curserObj.fetchall()
         con.close()
+
+    def initRandom(self, length):
+        v_names = []
+        n_names = []
+        v_wahl = "+43664"
+        read_csv("data/Vornamen.csv", 0, v_names, ';')
+        read_csv("data/nachnamen.csv",0, n_names, ",")
+        with open("data/counties.txt", "rb") as f:
+            counties = pickle.load(f)
+        numbers = phoneNumberGen(length + 1)
+        a = next(numbers)
+        self.data = []
+        for i in range(length):
+            n = str(next(numbers))
+            self.data += [(choice(n_names), choice(v_names), v_wahl, n, choice(counties))]
+
 
 #   Returns list of all numbers plus provider (i.e. +43664  and 123456789)
     def getData(self):
