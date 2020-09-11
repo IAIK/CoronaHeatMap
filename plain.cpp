@@ -59,7 +59,7 @@ int main(int argc, char *argv[]) {
 
   auto context = Client::create_context(PPA_PARAM::MOD_DEGREE, PPA_PARAM::PLAIN_MODULUS, PPA_PARAM::sec80);
   Server server(context, PPA_PARAM::PLAIN_MODULUS, PPA_PARAM::USE_BSGS);
-  server.activate_diff_priv(true, 1, 1 / privacy);
+  server.activate_diff_priv(true, 1, privacy);
 
   for (int64_t i : in) {
     out.push_back(i + server.laplace_round());
