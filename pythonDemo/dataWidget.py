@@ -107,6 +107,7 @@ class Ui_Form(object):
                           self.network_selectionRatio, self.accept_responseRatio, self.network_selectionRatio, self.county_selectorRatio, self.run_plainRatio]
         self.resize(Form.width(), Form.height())
         self.retranslateUi(Form)
+        self.run_plain.setEnabled(False)
         QtCore.QMetaObject.connectSlotsByName(Form)
 
     def retranslateUi(self, Form):
@@ -222,6 +223,9 @@ class PatientTable(QtWidgets.QTableWidget):
         self.setHorizontalHeaderLabels(['Name', 'Vorname', 'Provider-Vorwahl', 'Rufnummer', 'Bundesland'])
         self.providerCol = 2
         self.numberCol = 3
+        self.sortItems(1)
+        self.sortItems(0)
+        self.sortItems(4)
         self.enableSelection()
         palette = QPalette()
         palette.setColor(QPalette.Highlight, QtGui.QColor('#3a7fc2'))
@@ -250,10 +254,10 @@ class PatientTable(QtWidgets.QTableWidget):
         with open("data/counties.txt", "rb") as f:
             counties = pickle.load(f)
         numbers = phoneNumberGen(length + 1)
-        a = next(numbers)
+        next(numbers)
         self.data = []
         for i in range(length):
-            n = str(next(numbers))
+            n = str(next(numbers)).zfill(8)
             self.data += [(choice(n_names), choice(v_names), v_wahl, n, choice(counties))]
 
 
@@ -269,8 +273,14 @@ class PatientTable(QtWidgets.QTableWidget):
             self.selectAll()
         else:
             items = self.findItems(region, QtCore.Qt.MatchExactly)
-            for item in items:
-                self.selectRow(item.row())
+            top_left = self.indexFromItem(self.item(items[0].row(), 0))
+            bottom_right = self.indexFromItem(items[-1])
+            selection = QtCore.QItemSelection(top_left, bottom_right)
+            self.selectionModel().select(selection, QtCore.QItemSelectionModel.Select)
+            self.scrollToItem(items[0])
+            # for item in items:
+            #    self.selectRow(item.row())
+            #    break
         self.disableSelection()
 
     def selectedNumbers(self):
