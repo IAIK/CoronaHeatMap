@@ -39,6 +39,9 @@ class Server {
     uint64_t sensitivity;
     double epsilon;
 
+    bool mod_switch = false;
+    uint64_t mod_switch_levels_from_last = 0;
+
     bool use_bsgs;
     bool gk_set = false;
     bool relin_set = false;
@@ -132,4 +135,6 @@ class Server {
     void activate_diff_priv(bool activate, u_int64_t sensitivity, double epsilon);
     double laplace() const;
     int64_t laplace_round() const;
+
+    void activate_mod_switch(bool activate, uint64_t levels_from_last);
 };

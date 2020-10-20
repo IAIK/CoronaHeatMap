@@ -7,10 +7,16 @@ namespace PPA_PARAM {
   // BFV parameters
   // constexpr uint64_t PLAIN_MODULUS = 1103311814658949121ULL; // 60 bit
   // constexpr uint64_t MAX_PRIME_SIZE = ((1ULL << 60) - 1);
+  // constexpr uint64_t PLAIN_MODULUS = (4398046150657ULL); // 42 bit
+  // constexpr uint64_t MAX_PRIME_SIZE = ((1ULL << 42) - 1);
   constexpr uint64_t PLAIN_MODULUS = (8088322049ULL); // 33 bit
   constexpr uint64_t MAX_PRIME_SIZE = ((1ULL << 33) - 1);
   constexpr uint64_t MOD_DEGREE = 8192;
   constexpr bool sec80 = false; // 80 bit security?
+
+  // Server Mod_Switch
+  constexpr bool MOD_SWITCH = true;
+  constexpr uint64_t LEVELS_FROM_LAST = 0;
 
   // matrix dimensions
   // constexpr uint64_t N = (1ULL << 23); // phone numbers

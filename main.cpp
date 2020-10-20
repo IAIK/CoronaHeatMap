@@ -55,6 +55,7 @@ int main() {
   }
   server.set_num_threads(PPA_PARAM::NUM_THREADS);
   server.set_dimension(PPA_PARAM::N, PPA_PARAM::k);
+  server.activate_mod_switch(PPA_PARAM::MOD_SWITCH, PPA_PARAM::LEVELS_FROM_LAST);
   server.activate_diff_priv(PPA_PARAM::DIFF_PRIV, PPA_PARAM::SENSITIVITY, PPA_PARAM::EPSILON);
   server.set_input(ciphs);
   server.set_random_matrix(PPA_PARAM::RANDOM_MATRIX);

@@ -203,7 +203,13 @@ bool Server::compute_internal(std::vector<seal::Ciphertext>& out, uint64_t hw, b
         encoder.encode(noise_plain, noise);
         evaluator.add_plain_inplace(out[i], noise);
       }
-      evaluator.mod_switch_to_inplace(out[i], context->last_parms_id());
+      if (this->mod_switch) {
+        auto c = context->last_context_data();
+        for (uint64_t _ = 0; _ < this->mod_switch_levels_from_last; _++) {
+          c = c->prev_context_data();
+        }
+        evaluator.mod_switch_to_inplace(out[i], c->parms_id());
+      }
     }
     std::cout << "...done" << std::endl;
     return true;
@@ -264,7 +270,13 @@ bool Server::compute_internal(std::vector<seal::Ciphertext>& out, uint64_t hw, b
       encoder.encode(noise_plain, noise);
       evaluator.add_plain_inplace(out[i], noise);
     }
-    evaluator.mod_switch_to_inplace(out[i], context->last_parms_id());
+    if (this->mod_switch) {
+      auto c = context->last_context_data();
+      for (uint64_t _ = 0; _ < this->mod_switch_levels_from_last; _++) {
+        c = c->prev_context_data();
+      }
+      evaluator.mod_switch_to_inplace(out[i], c->parms_id());
+    }
   }
   std::cout << "...done" << std::endl;
   return true;
@@ -819,4 +831,9 @@ void Server::set_random_matrix(bool val) {
 
 void Server::set_matrix_path(const std::string& path) {
   matrix_path = path;
+}
+
+void Server::activate_mod_switch(bool activate, uint64_t levels_from_last) {
+  this->mod_switch = activate;
+  this->mod_switch_levels_from_last = levels_from_last;
 }

@@ -16,6 +16,7 @@ int main() {
   Server server(context, PPA_PARAM::PLAIN_MODULUS, PPA_PARAM::USE_BSGS);
   server.set_num_threads(PPA_PARAM::NUM_THREADS);
   server.set_dimension(PPA_PARAM::N, PPA_PARAM::k);
+  server.activate_mod_switch(PPA_PARAM::MOD_SWITCH, PPA_PARAM::LEVELS_FROM_LAST);
   server.activate_diff_priv(PPA_PARAM::DIFF_PRIV, PPA_PARAM::SENSITIVITY, PPA_PARAM::EPSILON);
   server.set_random_matrix(PPA_PARAM::RANDOM_MATRIX);
   uint64_t hw = server.keys_from_file(PPA_PARAM::MASKING);
