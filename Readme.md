@@ -25,12 +25,12 @@ Please use the following BibTeX entry to cite our work in academic papers.
 
 ```tex
 @article{APIR,
-  author    = {Lukas Helminger and
+  author    = {Alessandro Bruni and
+              Lukas Helminger and
               Daniel Kales and
               Christian Rechberger and
               Roman Walch},
-  title     = {Aggregated Private Information Retrieval: {A} First Practical Implementation
-              to Support Large-Scale Disease Analytics},
+  title     = {Privately Connecting Mobility to Infectious Diseases via Applied Cryptography},
   journal   = {CoRR},
   volume    = {abs/2005.02061},
   year      = {2020}
