@@ -65,6 +65,16 @@ uint64_t generate_random_field_element() {
 
 //----------------------------------------------------------------
 
+uint64_t generate_random_field_element_without_0() {
+  while (1) {
+    uint64_t ele = generate_random_field_element();
+    if (ele)
+      return ele;
+  }
+}
+
+//----------------------------------------------------------------
+
 uint64_t generate_random_uint64_t() {
   std::lock_guard<std::mutex> guard(shake_mutex);
   uint8_t random_bytes[sizeof(uint64_t)];

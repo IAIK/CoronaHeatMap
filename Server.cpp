@@ -187,7 +187,7 @@ bool Server::compute_internal(std::vector<seal::Ciphertext>& out, uint64_t hw, b
   if (num_threads == 1) {
     if (masking) {
       std::cout << "    Computing mask..." << std::flush;
-      computeMask(mask, input, hw);
+      computeMask(mask, hw);
       std::cout << "...done" << std::endl;
     }
     runner(out, input, 0, num_plaintexts, *this);
@@ -236,7 +236,7 @@ bool Server::compute_internal(std::vector<seal::Ciphertext>& out, uint64_t hw, b
 
   if (masking) {
     std::cout << "    Computing mask..." << std::flush;
-    computeMask(mask, input, hw);
+    computeMask(mask, hw);
     std::cout << "...done" << std::endl;
   }
 
@@ -342,17 +342,18 @@ void Server::computeHWMask(Ciphertext& mask,
 
 //----------------------------------------------------------------
 
-void Server::computeBinMask(Ciphertext& mask,
+void Server::computePartBinMask(Ciphertext& mask,
                    const std::vector<seal::Ciphertext>& in,
                    const std::vector<seal::Ciphertext>& in_minus_1) {
 
-  uint64_t y = generate_random_field_element();
+  uint64_t y = generate_random_field_element_without_0();
+  uint64_t r = generate_random_field_element_without_0();
 
 
   // y vector
   std::vector<Plaintext> y_enc(in.size());
 #ifdef __linux__
-  uint64_t start_val = 1;
+  uint64_t start_val = r;
   for (uint64_t j = 0; j < in.size(); j++) {
     std::vector<uint64_t> y_decode(slots, start_val);
     for (uint64_t i = 1; i < slots; i++) {
@@ -364,7 +365,7 @@ void Server::computeBinMask(Ciphertext& mask,
     encoder.encode(y_decode, y_enc[j]);
   }
 #else
-  uint64_t start_val = 1;
+  uint64_t start_val = r;
   seal::BigUInt bigy(128, y);
   for (uint64_t i = 0; i < in.size(); i++) {
     std::vector<uint64_t> y_decode(slots, start_val);
@@ -402,28 +403,40 @@ void Server::computeBinMask(Ciphertext& mask,
 
 }
 
+void Server::computeBinMask(Ciphertext& mask,
+                   const std::vector<seal::Ciphertext>& in,
+                   const std::vector<seal::Ciphertext>& in_minus_1) {
+  Ciphertext mask1;
+
+  computePartBinMask(mask, in, in_minus_1);
+  computePartBinMask(mask1, in, in_minus_1);
+
+  evaluator.add_inplace(mask, mask1);
+}
+
 //----------------------------------------------------------------
 
 void Server::computeMask(std::vector<Ciphertext>& mask,
-                const std::vector<seal::Ciphertext>& in,
                 uint64_t hw) {
 
   // d vector
   std::vector<Ciphertext> d;
-  minus_1(in, d);
+  minus_1(input, d);
 
   // first operand
   Ciphertext mask_hw;
-  computeHWMask(mask_hw, in, hw);
+  computeHWMask(mask_hw, input, hw);
   uint64_t z = generate_random_field_element();
   Plaintext Z;
   encoder.encode(std::vector<uint64_t>(slots, z), Z);
   evaluator.multiply_plain_inplace(mask_hw, Z);
 
-  // second operand
+  // second operand (consisting of two randomized masks)
   Ciphertext mask_bin;
-  computeBinMask(mask_bin, in, d);
+  computeBinMask(mask_bin, input, d);
 
+  // final add
+  evaluator.add_inplace(mask_hw, mask_bin);
 
   // r vec
   std::vector<Plaintext> r_enc(num_ciphertexts);
@@ -431,15 +444,12 @@ void Server::computeMask(std::vector<Ciphertext>& mask,
     std::vector<uint64_t> r_decode;
     r_decode.reserve(slots);
     for (uint64_t j = 0; j < slots; j++) {
-      r_decode.push_back(generate_random_field_element());
+      r_decode.push_back(generate_random_field_element_without_0());
     }
     encoder.encode(r_decode, r_enc[i]);
   }
 
-  // final add
-  evaluator.add_inplace(mask_hw, mask_bin);
-
-  // mask
+  // randomizing the scalar mask for each slot
   mask.resize(num_ciphertexts);
   for(uint64_t i = 0; i < num_ciphertexts; i++) {
     evaluator.multiply_plain(mask_hw, r_enc[i], mask[i]);
@@ -463,6 +473,7 @@ void Server::runner(std::vector<seal::Ciphertext>& out,
         server.babystep_giantstep(r, mat);
       else
         server.diagonal(r, mat);
+
       // two results are in the two rows of the ciphertexts
       Ciphertext r_rot;
       server.evaluator.rotate_columns(r, server.galois_keys, r_rot);
@@ -476,12 +487,65 @@ void Server::runner(std::vector<seal::Ciphertext>& out,
 }
 
 //----------------------------------------------------------------
+void Server::get_matrix(const std::string &path) {
+  std::cout << "Get matrix from " << path << std::endl;
+  if(!input_matrix.empty()){
+      std::cout << "Warning, matrix was already initialized" << std::endl;
+  }
 
-// TODO read matrix for real data, for now just random
+  std::ifstream is;
+  is.open(path);
+  if(!is.is_open()){
+      std::cout << "ERROR: Unable to open file: " << path << std::endl;
+      exit(-1);
+  }
+  std::vector<std::vector<uint32_t>> input_m;
+  std::vector<uint32_t> row;
+  std::string line, word, temp;
+  uint64_t intermediate;
+
+  while (!is.eof()) {
+      row.clear();
+      getline(is, line);
+      std::stringstream s(line);
+      while (getline(s, word, ',')) {
+          intermediate = std::stoi(word);
+          row.push_back(intermediate);
+      }
+      input_m.push_back(row);
+  }
+  input_matrix = input_m;
+}
+
 inline uint32_t Server::get_matrix_element(uint64_t row, uint64_t col) {
+  uint32_t val = 0;
   if (row >= N || col >= k)
+  {
     return 0;
-  return col * row + 2 * col + row;
+  }
+
+  if (random_matrix) {
+    return col * col - col * row + row * row;
+  }
+
+  matrix_mutex.lock();
+
+  if(input_matrix.empty()){
+      get_matrix(matrix_path);
+      if(input_matrix.empty() || input_matrix.size() <= N){
+          std::cout << "cannot get element from empty matrix: " << "vienna_matrix.csv" << std::endl;
+          matrix_mutex.unlock();
+          exit(-1);
+      }
+  }
+  if(input_matrix[row].size() <= col){
+    std::cout << "illegal access at: " << row << ", " << col << std::endl;
+    matrix_mutex.unlock();
+    exit(-1);
+  }
+  val = input_matrix[row][col];
+  matrix_mutex.unlock();
+  return val;
 }
 
 //----------------------------------------------------------------
@@ -504,150 +568,9 @@ void Server::get_submatrix(plain_matrix& out, uint64_t row, uint64_t col) {
 
 //----------------------------------------------------------------
 
-void Server::createChallenge(seal::Ciphertext& mask,
-          const std::vector<seal::Ciphertext>& in,
-          uint64_t hw, uint64_t num_challenges) {
-  computeChallengeMask(mask, in, hw, num_challenges);
-
-  Plaintext chal;
-
-  randomChallenge(num_challenges);
-  challenge.resize(encoder.slot_count(), 0);
-  encoder.encode(challenge, chal);
-  evaluator.add_plain_inplace(mask, chal);
-  evaluator.mod_switch_to_inplace(mask, context->last_parms_id());
-}
-
-//----------------------------------------------------------------
-
-void Server::randomChallenge(uint64_t num_challenges) {
-
-  challenge.resize(num_challenges);
-  for (uint64_t i = 0; i < num_challenges; i++)
-    challenge[i] = generate_random_field_element();
-}
-
-//----------------------------------------------------------------
-
 void Server::set_input(std::vector<seal::Ciphertext>& in) {
   input = in;
   in_set = true;
-}
-
-//----------------------------------------------------------------
-
-void Server::computeChallengeMask(Ciphertext& mask,
-                          const std::vector<seal::Ciphertext>& in,
-                          uint64_t hw, uint64_t num_challenges) {
-
-  // d vector
-  std::vector<Ciphertext> d;
-  minus_1(in, d);
-
-  Plaintext r;
-  std::vector<uint64_t> r_decode(slots, 0);
-
-  if (num_threads == 1) {
-    // first operand
-    Ciphertext mask_hw;
-    computeHWMask(mask_hw, in, hw);
-
-    // second operand, NUM_MASKS times
-    for (uint64_t i = 0; i < num_challenges; i++) {
-      uint64_t z = generate_random_field_element();
-      Plaintext Z;
-      Ciphertext mask_hwz;
-      encoder.encode(std::vector<uint64_t>(slots, z), Z);
-      evaluator.multiply_plain(mask_hw, Z, mask_hwz);
-      Ciphertext mask_bin;
-      computeBinMask(mask_bin, in, d);
-      evaluator.add_inplace(mask_bin, mask_hwz);
-      r_decode[0] = generate_random_field_element();
-      encoder.encode(r_decode, r);
-      evaluator.multiply_plain_inplace(mask_bin, r);
-      if (i == 0) {
-        mask = mask_bin;
-      }
-      else {
-        evaluator.rotate_rows_inplace(mask_bin, -i, galois_keys);
-        evaluator.add_inplace(mask, mask_bin);
-      }
-    }
-    return;
-  }
-
-  // MULTITHREADING
-
-  uint64_t num = ceil((double)num_challenges / num_threads);
-
-  // capping threads
-  uint64_t n_threads = num_threads;
-  for (uint64_t i = 0; i < n_threads; i++) {
-    if (i * num >= num_challenges) {
-      n_threads = i;
-      break;
-    }
-  }
-  std::cout << std::endl;
-  std::cout << "    Spawning " << n_threads << " threads, each calculating " << num << " bin masks..." << std::flush;
-
-  std::vector<std::thread> threads;
-  threads.reserve(n_threads);
-  std::vector<Ciphertext> t_res;
-  t_res.resize(num_challenges);
-  for (uint64_t i = 0; i < n_threads; i++) {
-    std::thread t(runner_challenge, std::ref(t_res), std::ref(in), std::ref(d), i * num, num, num_challenges, std::ref(*this));
-    threads.push_back(std::move(t));
-  }
-  std::cout << "...done" << std::endl;
-
-  std::cout << "    Computing HW mask..." << std::flush;
-  Ciphertext mask_hw;
-  computeHWMask(mask_hw, in, hw);
-  std::cout << "...done" << std::endl;
-
-  std::cout << "    Waiting..." << std::flush;
-  for (auto& t : threads) {
-  // If thread Object is Joinable then Join that thread.
-    if (t.joinable())
-      t.join();
-  }
-  std::cout << "...done" << std::endl;
-
-  std::cout << "    Combining results from threads..." << std::flush;
-  for (uint64_t i = 0; i < num_challenges; i++) {
-    uint64_t z = generate_random_field_element();
-    Plaintext Z;
-    Ciphertext mask_hwz;
-    encoder.encode(std::vector<uint64_t>(slots, z), Z);
-    evaluator.multiply_plain(mask_hw, Z, mask_hwz);
-    evaluator.add_inplace(t_res[i], mask_hwz);
-    r_decode[0] = generate_random_field_element();
-    encoder.encode(r_decode, r);
-    evaluator.multiply_plain_inplace(t_res[i], r);
-    if (i == 0) {
-      mask = t_res[i];
-    }
-    else {
-      evaluator.rotate_rows_inplace(t_res[i], -i, galois_keys);
-      evaluator.add_inplace(mask, t_res[i]);
-    }
-  }
-  std::cout << "...done" << std::endl;
-}
-
-//----------------------------------------------------------------
-
-void Server::runner_challenge(std::vector<Ciphertext>& masks,
-                      const std::vector<seal::Ciphertext>& in,
-                      const std::vector<seal::Ciphertext>& in_minus_1,
-                      uint64_t start_index,
-                      uint64_t num,
-                      uint64_t num_challenges, Server& server) {
-
-  for (uint64_t i = start_index; i < start_index + num && i < num_challenges; i++) {
-    server.computeBinMask(masks[i], in, in_minus_1);
-  }
 }
 
 //----------------------------------------------------------------
@@ -678,6 +601,10 @@ void Server::compute_plain(std::vector<uint64_t>& out,
 
   if (num_threads == 1) {
     runner_plain(out, in, 0, N, *this);
+    if (diff_priv) {
+      for (auto &el : out)
+        el += laplace_round();
+    }
     return;
   }
 
@@ -721,6 +648,8 @@ void Server::compute_plain(std::vector<uint64_t>& out,
     for (uint64_t t = 1; t < n_threads; t++) {
       out[i] = (out[i] + t_res[t][i]) % plain_mod;
     }
+    if (diff_priv)
+      out[i] += laplace_round();
   }
   std::cout << "...done" << std::endl;
 }
@@ -763,30 +692,27 @@ std::shared_ptr<seal::SEALContext> Server::context_from_file(bool sec80) {
 
 //----------------------------------------------------------------
 
-uint64_t Server::keys_from_file(bool masking, uint64_t num_challenges) {
+uint64_t Server::keys_from_file(bool masking) {
 
   std::ifstream gk;
   gk.open(GK_FILE);
   galois_keys.load(context, gk);
   gk_set = true;
 
-  if (masking || num_challenges > 0) {
-    uint64_t hw;
+  if (masking) {
     std::ifstream rk;
     rk.open(RK_FILE);
     relin_keys.load(context, rk);
     relin_set = true;
-
-    std::ifstream h;
-    h.open(HW_FILE);
-    h >> hw;
-    std::cout << "...done" << std::endl;
-    std::cout << "Hamming weight is " << hw << std::endl;
-    return hw;
-
   }
+
+  uint64_t hw;
+  std::ifstream h;
+  h.open(HW_FILE);
+  h >> hw;
   std::cout << "...done" << std::endl;
-  return 0;
+  std::cout << "Hamming weight is " << hw << std::endl;
+  return hw;
 }
 
 //----------------------------------------------------------------
@@ -813,7 +739,7 @@ void Server::print_parameters() {
     throw std::invalid_argument("unsupported scheme");
   }
   std::cout << "/" << std::endl;
-  std::cout << "| Encryption parameters :" << std::endl;
+  std::cout << "| Encryption parameters:" << std::endl;
   std::cout << "|   scheme: " << scheme_name << std::endl;
   std::cout << "|   poly_modulus_degree: " << context_data.parms().poly_modulus_degree()
             << std::endl;
@@ -852,12 +778,6 @@ void Server::ciphers_to_file(std::vector<seal::Ciphertext>& ciphers) {
 }
 
 //----------------------------------------------------------------
-
-bool Server::correct_challenge(std::vector<uint64_t>& in) {
-  return (challenge == in);
-}
-
-//----------------------------------------------------------------
 void Server::activate_diff_priv(bool activate, u_int64_t sens, double eps) {
   diff_priv = activate;
   sensitivity = sens;
@@ -889,4 +809,14 @@ double Server::laplace() const {
 int64_t Server::laplace_round() const {
   int64_t res = round(laplace());
   return res;
+}
+
+//----------------------------------------------------------------
+
+void Server::set_random_matrix(bool val) {
+  random_matrix = val;
+}
+
+void Server::set_matrix_path(const std::string& path) {
+  matrix_path = path;
 }

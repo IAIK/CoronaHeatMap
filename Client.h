@@ -13,12 +13,17 @@ class Client {
     static constexpr const char* CIPHER_FILE = "cipher_in";
     static constexpr const char* RESULT_FILE = "cipher_out";
 
+
+    std::string oneHot_in_path_;
+    std::string request_out_path_;
+    std::string key_out_path_;
+
     std::shared_ptr<seal::SEALContext> context;
     seal::KeyGenerator keygen;
 
     seal::GaloisKeys galois_keys;
     seal::SecretKey secret_key;
-    seal::RelinKeys relin_keys;
+    //seal::RelinKeys relin_keys;
 
     seal::Encryptor encryptor;
     seal::Evaluator evaluator;
@@ -30,16 +35,17 @@ class Client {
     uint64_t slots;
     uint64_t num_plaintexts;
     uint64_t num_ciphertexts;
-    uint64_t num_challenges;
     uint64_t plain_mod;
 
-    static const std::map<size_t, std::vector<seal::SmallModulus>> default_coeff_modulus_80;
+    static const std::map<size_t, std::vector<seal::Modulus>> default_coeff_modulus_80;
 
-    static std::vector<seal::SmallModulus> BFV_80bit(size_t);
+    static std::vector<seal::Modulus> BFV_80bit(size_t);
 
     void get_bsgs_params(uint64_t& bsgs_n1, uint64_t& bsgs_n2) const;
 
   public:
+    static constexpr const char* RESULT_PLAIN = "plain_out";
+
     Client(std::shared_ptr<seal::SEALContext>, uint64_t plain_mod, bool to_file = false);
     Client(std::shared_ptr<seal::SEALContext>, uint64_t plain_mod, seal::SecretKey&);
     ~Client() = default;
@@ -50,6 +56,8 @@ class Client {
 
     static std::shared_ptr<seal::SEALContext> context_from_file(bool sec80);
 
+    void set_file_paths(const std::string& oneHot_in_path, const std::string& request_out_path, const std::string& key_out_path);
+
     int print_noise(std::vector<seal::Ciphertext>&);
     int get_noise(seal::Ciphertext&);
     void print_parameters();
@@ -58,17 +66,19 @@ class Client {
     uint64_t get_slots() const;
 
     seal::GaloisKeys& get_galois_keys();
-    seal::RelinKeys& get_relin_keys();
+    seal::RelinKeys get_relin_keys();
 
     void set_dimension(uint64_t N, uint64_t k);
 
-    void create_gk(uint64_t num_challenges, bool masking = true, bool use_bsgs = true, bool to_file = false);
+    void create_gk(bool masking = true, bool use_bsgs = true, bool to_file = false);
 
     bool ciphers_from_file(std::vector<seal::Ciphertext>& ciphers);
 
     static void sk_from_file(seal::SecretKey&, std::shared_ptr<seal::SEALContext>&);
 
     void get_input(std::vector<uint64_t>& input);
+    void get_input_from_file(std::vector<uint64_t>& input, const std::string& path);
+    static void write_result_to_file(std::vector<uint64_t>& res, const std::string& path);
     uint64_t encrypt(std::vector<seal::Ciphertext>&, std::vector<uint64_t>&);
     uint64_t encrypt_to_file(std::vector<uint64_t>&);
     bool decrypt(std::vector<uint64_t>&, std::vector<seal::Ciphertext>&, bool cap_negative = false);

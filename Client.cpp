@@ -7,7 +7,7 @@ using namespace seal;
 
 //----------------------------------------------------------------
 
-const std::map<size_t, std::vector<seal::SmallModulus>> Client::default_coeff_modulus_80
+const std::map<size_t, std::vector<seal::Modulus>> Client::default_coeff_modulus_80
           {
               /*
               Polynomial modulus: 1x^4096 + 1
@@ -35,15 +35,16 @@ const std::map<size_t, std::vector<seal::SmallModulus>> Client::default_coeff_mo
 //----------------------------------------------------------------
 
 Client::Client(std::shared_ptr<seal::SEALContext> con, uint64_t p_mod, bool to_file)
-      : context(con), keygen(context), secret_key(keygen.secret_key()),
-        relin_keys(keygen.relin_keys()), encryptor(context, secret_key),
-        evaluator(context), decryptor(context, secret_key), encoder(context),
-        slots(encoder.slot_count()), plain_mod(p_mod)
+    : context(con), keygen(context), secret_key(keygen.secret_key()),
+      encryptor(context, secret_key),
+      evaluator(context), decryptor(context, secret_key), encoder(context),
+      slots(encoder.slot_count()), plain_mod(p_mod)
 {
   if (to_file) {
     std::ofstream rk;
     rk.open(RK_FILE);
-    keygen.relin_keys_save(rk);
+    auto rlk = keygen.relin_keys();
+    rlk.save(rk);
 
     std::ofstream sk;
     sk.open(SK_FILE);
@@ -51,15 +52,17 @@ Client::Client(std::shared_ptr<seal::SEALContext> con, uint64_t p_mod, bool to_f
   }
 }
 
+
 //----------------------------------------------------------------
 
 Client::Client(std::shared_ptr<seal::SEALContext> con, uint64_t p_mod, seal::SecretKey& sk)
-      : context(con), keygen(context), secret_key(sk),
-        relin_keys(keygen.relin_keys()), encryptor(context, secret_key),
-        evaluator(context), decryptor(context, secret_key), encoder(context),
-        slots(encoder.slot_count()), plain_mod(p_mod)
+    : context(con), keygen(context), secret_key(sk),
+      encryptor(context, secret_key),
+      evaluator(context), decryptor(context, secret_key), encoder(context),
+      slots(encoder.slot_count()), plain_mod(p_mod)
 {
 }
+
 
 //----------------------------------------------------------------
 
@@ -132,6 +135,14 @@ std::shared_ptr<seal::SEALContext> Client::context_from_file(bool sec80) {
 
 //----------------------------------------------------------------
 
+void Client::set_file_paths(const std::string& oneHot_in_path, const std::string& request_out_path, const std::string& key_out_path){
+  oneHot_in_path_ = oneHot_in_path;
+  request_out_path_ = request_out_path;
+  key_out_path_ = key_out_path;
+}
+
+//----------------------------------------------------------------
+
 int Client::print_noise(std::vector<Ciphertext>& ciphs) {
   int min = decryptor.invariant_noise_budget(ciphs[0]);
   int max = min;
@@ -171,7 +182,7 @@ void Client::print_parameters() {
     throw std::invalid_argument("unsupported scheme");
   }
   std::cout << "/" << std::endl;
-  std::cout << "| Encryption parameters :" << std::endl;
+  std::cout << "| Encryption parameters:" << std::endl;
   std::cout << "|   scheme: " << scheme_name << std::endl;
   std::cout << "|   poly_modulus_degree: " << context_data.parms().poly_modulus_degree()
             << std::endl;
@@ -211,9 +222,7 @@ void Client::set_dimension(uint64_t N_in, uint64_t k_in) {
 
 //----------------------------------------------------------------
 
-void Client::create_gk(uint64_t challenges, bool masking, bool use_bsgs, bool to_file) {
-  this->num_challenges = challenges;
-
+void Client::create_gk(bool masking, bool use_bsgs, bool to_file) {
   // key for rotations, only create those needed
   std::vector<int> gks;
   gks.push_back(0);
@@ -225,30 +234,26 @@ void Client::create_gk(uint64_t challenges, bool masking, bool use_bsgs, bool to
     for (uint64_t l = 1; l < bsgs_n2; l++)
       gks.push_back(l * bsgs_n1);
   }
-  if (masking || num_challenges > 0) {
+  if (masking) {
     uint64_t rot_index = 2;
     while (rot_index < (slots >> 1)) {
       gks.push_back(rot_index);
       rot_index *= 2;
     }
   }
-  if (num_challenges > 0) {
-    for (uint64_t i = 1; i < num_challenges; i++) {
-      gks.push_back(-i);
-    }
-  }
   if (to_file) {
     std::ofstream gk;
     gk.open(GK_FILE);
-    keygen.galois_keys_save(gks, gk);
+    auto glk = keygen.galois_keys(gks);
+    glk.save(gk);
   }
   else
-    galois_keys = keygen.galois_keys(gks);
+    galois_keys = keygen.galois_keys_local(gks);
 }
 
 //----------------------------------------------------------------
 
-std::vector<seal::SmallModulus> Client::BFV_80bit(size_t poly_modulus_degree) {
+std::vector<seal::Modulus> Client::BFV_80bit(size_t poly_modulus_degree) {
   return default_coeff_modulus_80.at(poly_modulus_degree);
 }
 
@@ -278,8 +283,8 @@ seal::GaloisKeys& Client::get_galois_keys() {
 
 //----------------------------------------------------------------
 
-seal::RelinKeys& Client::get_relin_keys() {
-  return relin_keys;
+seal::RelinKeys Client::get_relin_keys() {
+    return keygen.relin_keys_local();
 }
 
 //----------------------------------------------------------------
@@ -307,6 +312,47 @@ void Client::get_input(std::vector<uint64_t>& input) {
     input.push_back(r);
   }
 }
+
+void Client::get_input_from_file(std::vector<uint64_t> &input, const std::string& path) {
+    std::ifstream is;
+    is.open(path);
+    if(!is.is_open()){
+        std::cout << "ERROR: Unable to open file: " << path << std::endl;
+        exit(-1);
+    }
+    std::string in;
+    int intermediate;
+    while(!is.eof()){
+        std::getline(is, in, ',');
+        //std::cout << " in read-> " << in << std::flush;
+        intermediate = std::stoi(in);
+        if(intermediate != 0 && intermediate != 1){
+            std::cout << "ERROR: csv format incorrect: " << intermediate << std::endl;
+            exit(-1);
+        }
+        input.push_back(intermediate);
+    }
+    std::cout << "size: " << input.size() << std::endl;
+    std::cout << "N " << N << std::endl;
+//    assert(input.size() == N);
+}
+
+void Client::write_result_to_file(std::vector<uint64_t>& res, const std::string& path){
+    std::ofstream os;
+    os.open(path);
+    if(!os.is_open()){
+        std::cout << "ERROR: Unable to open file: " << path << std::endl;
+        exit(-1);
+    }
+    for(uint64_t i = 0; i < res.size(); i++){
+        if(i != 0){
+            os << ",";
+        }
+        os << std::to_string(res[i]);
+    }
+    os.close();
+}
+
 
 //----------------------------------------------------------------
 uint64_t Client::encrypt(std::vector<Ciphertext>& ciphs, std::vector<uint64_t>& input) {
@@ -350,7 +396,8 @@ uint64_t Client::encrypt_to_file(std::vector<uint64_t>& input) {
     plain.resize(slots, 0); // pad with zero
     Plaintext plain_enc;
     encoder.encode(plain, plain_enc);
-    encryptor.encrypt_symmetric_save(plain_enc, c);
+    auto ct = encryptor.encrypt_symmetric(plain_enc);
+    ct.save(c);
   }
 
   std::ofstream h;

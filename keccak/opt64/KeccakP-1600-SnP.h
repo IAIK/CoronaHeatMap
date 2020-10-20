@@ -18,6 +18,7 @@ Please refer to SnP-documentation.h for more details.
 #ifndef _KeccakP_1600_SnP_h_
 #define _KeccakP_1600_SnP_h_
 
+#include "portable_endian.h"
 #include "KeccakP-1600-opt64-config.h"
 
 #define KeccakP1600_implementation                                             \

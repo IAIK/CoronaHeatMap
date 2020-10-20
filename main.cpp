@@ -19,7 +19,7 @@ int main() {
   client.print_parameters();
   std::cout << std::endl;
   client.set_dimension(PPA_PARAM::N, PPA_PARAM::k);
-  client.create_gk(PPA_PARAM::NUM_MASKS, PPA_PARAM::MASKING, PPA_PARAM::USE_BSGS);
+  client.create_gk(PPA_PARAM::MASKING, PPA_PARAM::USE_BSGS);
   std::cout << "...done" << std::endl;
 
   //----------------------------------------------------------------
@@ -49,44 +49,19 @@ int main() {
 
   Server server(context, PPA_PARAM::PLAIN_MODULUS, PPA_PARAM::USE_BSGS);
   server.set_gk(client.get_galois_keys());
-  if (PPA_PARAM::MASKING || PPA_PARAM::NUM_MASKS > 0)
-    server.set_rk(client.get_relin_keys());
+  if (PPA_PARAM::MASKING) {
+    auto rlk = client.get_relin_keys();
+    server.set_rk(rlk);
+  }
   server.set_num_threads(PPA_PARAM::NUM_THREADS);
   server.set_dimension(PPA_PARAM::N, PPA_PARAM::k);
   server.activate_diff_priv(PPA_PARAM::DIFF_PRIV, PPA_PARAM::SENSITIVITY, PPA_PARAM::EPSILON);
   server.set_input(ciphs);
+  server.set_random_matrix(PPA_PARAM::RANDOM_MATRIX);
+  server.set_matrix_path("data/vienna_matrix.csv");
 
   std::chrono::high_resolution_clock::time_point time_start, time_end;
   std::chrono::milliseconds time_diff;
-
-  if (PPA_PARAM::NUM_MASKS > 0) {
-    std::cout << "Computing challenge..." << std::flush;
-    Ciphertext result_ciph;
-    time_start = std::chrono::high_resolution_clock::now();
-    server.createChallenge(result_ciph, ciphs, hw, PPA_PARAM::NUM_MASKS);
-    time_end = std::chrono::high_resolution_clock::now();
-    time_diff = std::chrono::duration_cast<std::chrono::milliseconds>(time_end - time_start);
-    std::cout << "...done" << std::endl;
-    std::cout << "Time: " << time_diff.count() << " milliseconds" << std::endl;
-
-    std::cout << "Challenge noise:" << std::endl;
-    int noise = client.get_noise(result_ciph);
-    std::cout << "noise budget: " << noise << std::endl;  std::cout << "Decrypting mask..." << std::flush;
-
-    std::vector<uint64_t> res;
-    client.decrypt(res, result_ciph);
-    std::cout << "...done" << std::endl;
-
-    std::cout << "Result:" << std::endl;
-    bool correct = server.correct_challenge(res);
-
-    if (correct)
-      std::cout << "Challenge ok!" << std::endl;
-    else {
-      std::cout << "Wrong challenge... Abort!" << std::endl;
-      exit(-1);
-    }
-  }
 
   std::cout << "Computing result..." << std::flush;
   std::vector<Ciphertext> result_ciph;

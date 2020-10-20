@@ -2,3 +2,4 @@ SEAL/
 bin/
 build/
 .vs/
+.vscode/

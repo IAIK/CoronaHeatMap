@@ -17,7 +17,7 @@ int main() {
   client.print_parameters();
   std::cout << std::endl;
   client.set_dimension(PPA_PARAM::N, PPA_PARAM::k);
-  client.create_gk(PPA_PARAM::NUM_MASKS, PPA_PARAM::MASKING, PPA_PARAM::USE_BSGS);
+  client.create_gk(true, PPA_PARAM::USE_BSGS);
   std::cout << "...done" << std::endl;
 
   //----------------------------------------------------------------
@@ -47,8 +47,8 @@ int main() {
 
   Server server(context, PPA_PARAM::PLAIN_MODULUS, PPA_PARAM::USE_BSGS);
   server.set_gk(client.get_galois_keys());
-  if (PPA_PARAM::MASKING || PPA_PARAM::NUM_MASKS > 0)
-    server.set_rk(client.get_relin_keys());
+  auto rlk = client.get_relin_keys();
+  server.set_rk(rlk);
   server.set_num_threads(PPA_PARAM::NUM_THREADS);
   server.set_dimension(PPA_PARAM::N, PPA_PARAM::k);
   server.set_input(ciphs);
@@ -58,10 +58,10 @@ int main() {
   std::chrono::high_resolution_clock::time_point time_start, time_end;
   std::chrono::milliseconds time_diff;
 
-  std::cout << "Computing challenge..." << std::flush;
-  Ciphertext result_ciph;
+  std::cout << "Computing mask..." << std::flush;
+  std::vector<Ciphertext> mask;
   time_start = std::chrono::high_resolution_clock::now();
-  server.createChallenge(result_ciph, ciphs, hw, PPA_PARAM::NUM_MASKS);
+  server.computeMask(mask, hw);
   time_end = std::chrono::high_resolution_clock::now();
   time_diff = std::chrono::duration_cast<std::chrono::milliseconds>(time_end - time_start);
   std::cout << "...done" << std::endl;
@@ -70,15 +70,20 @@ int main() {
   //----------------------------------------------------------------
 
   std::cout << "Final noise:" << std::endl;
-  int noise = client.get_noise(result_ciph);
-  std::cout << "noise budget: " << noise << std::endl;  std::cout << "Decrypting mask..." << std::flush;
+  client.print_noise(mask);
+  std::cout << "Decrypting mask..." << std::flush;
 
   std::vector<uint64_t> res;
-  client.decrypt(res, result_ciph);
+  client.decrypt(res, mask);
   std::cout << "...done" << std::endl;
 
   std::cout << "Result:" << std::endl;
-  bool correct = server.correct_challenge(res);
+  bool correct = true;
+
+  for (auto el : res) {
+    if (el != 0)
+      correct = false;
+  }
 
   if (correct)
     std::cout << "Test passed!" << std::endl;

@@ -14,8 +14,9 @@ class Server {
 
     typedef std::vector<std::vector<uint32_t>> plain_matrix;
 
-    std::vector<uint64_t> challenge;
     std::vector<seal::Ciphertext> input;
+    std::vector<std::vector<uint32_t>> input_matrix;
+    std::mutex matrix_mutex;
     bool in_set = false;
 
     std::shared_ptr<seal::SEALContext> context;
@@ -42,6 +43,10 @@ class Server {
     bool gk_set = false;
     bool relin_set = false;
 
+    bool random_matrix = false;
+
+    std::string matrix_path;
+
     uint64_t bsgs_n1;
     uint64_t bsgs_n2;
 
@@ -56,11 +61,13 @@ class Server {
 
     void computeHWMask(seal::Ciphertext&,
                    const std::vector<seal::Ciphertext>&, uint64_t);
+
+    void computePartBinMask(seal::Ciphertext&,
+                   const std::vector<seal::Ciphertext>&,
+                   const std::vector<seal::Ciphertext>&);
     void computeBinMask(seal::Ciphertext&,
                    const std::vector<seal::Ciphertext>&,
                    const std::vector<seal::Ciphertext>&);
-    void computeMask(std::vector<seal::Ciphertext>&,
-                const std::vector<seal::Ciphertext>&, uint64_t);
 
     void diagonal(seal::Ciphertext& state, const plain_matrix& mat);
     void babystep_giantstep(seal::Ciphertext& state,
@@ -77,15 +84,7 @@ class Server {
     void get_submatrix(plain_matrix&, uint64_t, uint64_t);
     inline uint32_t get_matrix_element(uint64_t row, uint64_t col);
 
-    void randomChallenge(uint64_t num_challenges);
-
-    void computeChallengeMask(seal::Ciphertext&,
-                          const std::vector<seal::Ciphertext>&,
-                          uint64_t, uint64_t);
-    static void runner_challenge(std::vector<seal::Ciphertext>&,
-                      const std::vector<seal::Ciphertext>&,
-                      const std::vector<seal::Ciphertext>&,
-                      uint64_t, uint64_t, uint64_t, Server&);
+    void get_matrix(const std::string& path);
 
     static void runner_plain(std::vector<uint64_t>&,
                   const std::vector<uint64_t>&,
@@ -101,7 +100,7 @@ class Server {
 
     static std::shared_ptr<seal::SEALContext> context_from_file(bool sec80);
 
-    uint64_t keys_from_file(bool masking, uint64_t num_challenges);
+    uint64_t keys_from_file(bool masking);
 
     void print_parameters();
 
@@ -112,23 +111,23 @@ class Server {
 
     void set_num_threads(uint64_t);
 
+    void set_random_matrix(bool);
+
+    void set_matrix_path(const std::string&);
+
     bool compute(std::vector<seal::Ciphertext>& out);
 
     bool computeWithMask(std::vector<seal::Ciphertext>& out, uint64_t hw);
 
-    void set_input(std::vector<seal::Ciphertext>&);
+    void computeMask(std::vector<seal::Ciphertext>& mask, uint64_t hw);
 
-    void createChallenge(seal::Ciphertext& mask,
-              const std::vector<seal::Ciphertext>& in,
-              uint64_t hw, uint64_t num_challenges);
+    void set_input(std::vector<seal::Ciphertext>&);
 
     void compute_plain(std::vector<uint64_t>& out,
                   const std::vector<uint64_t>& in);
 
     bool ciphers_from_file();
     void ciphers_to_file(std::vector<seal::Ciphertext>& ciphers);
-
-    bool correct_challenge(std::vector<uint64_t>&);
 
     void activate_diff_priv(bool activate, u_int64_t sensitivity, double epsilon);
     double laplace() const;

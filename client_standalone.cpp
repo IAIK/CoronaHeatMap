@@ -24,7 +24,7 @@ void enc() {
   client.print_parameters();
   std::cout << std::endl;
   client.set_dimension(PPA_PARAM::N, PPA_PARAM::k);
-  client.create_gk(PPA_PARAM::NUM_MASKS, PPA_PARAM::MASKING, PPA_PARAM::USE_BSGS, true);
+  client.create_gk(PPA_PARAM::MASKING, PPA_PARAM::USE_BSGS, true);
   std::cout << "...done" << std::endl;
 
   //----------------------------------------------------------------
@@ -74,6 +74,8 @@ void dec() {
   std::vector<uint64_t> res;
   bool ok = client.decrypt(res, ciphs);
   std::cout << "...done" << std::endl;
+  std::cout << "writing " << res.size() << " entries to file" << std::endl;
+  Client::write_result_to_file(res, Client::RESULT_PLAIN);
 
   (void)ok;
 
@@ -86,9 +88,11 @@ void dec() {
   std::vector<uint64_t> input;
   client.get_input(input);
 
+
   Server server(context, PPA_PARAM::PLAIN_MODULUS, PPA_PARAM::USE_BSGS);
   server.set_num_threads(PPA_PARAM::NUM_THREADS);
   server.set_dimension(PPA_PARAM::N, PPA_PARAM::k);
+  server.set_random_matrix(PPA_PARAM::RANDOM_MATRIX);
 
   std::vector<uint64_t> result_plain;
   time_start = std::chrono::high_resolution_clock::now();
@@ -106,8 +110,7 @@ void dec() {
     std::cout << "sizes differ, should be: " << result_plain.size() << ", is " << res.size() << std::endl;
 
   bool correct = true;
-  for (uint64_t i = 0; i < PPA_PARAM::k; i++)
-  {
+  for (uint64_t i = 0; i < PPA_PARAM::k; i++) {
     if (res[i] != result_plain[i]) {
       correct = false;
       std::cout << "Error: First mismatch at index " << i << std::endl;
@@ -115,8 +118,9 @@ void dec() {
     }
   }
 
-  if (correct)
-    std::cout << "Test passed!" << std::endl;
+  if (correct) {
+      std::cout << "Test passed!" << std::endl;
+  }
   else
     std::cout << "Test failed..." << std::endl;
 

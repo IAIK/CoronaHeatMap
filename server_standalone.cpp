@@ -10,8 +10,6 @@
 using namespace seal;
 
 int main() {
-
-//----------------------------------------------------------------
   std::cout << "Reading Keys..." << std::flush;
   auto context = Server::context_from_file(PPA_PARAM::sec80);
 
@@ -19,8 +17,8 @@ int main() {
   server.set_num_threads(PPA_PARAM::NUM_THREADS);
   server.set_dimension(PPA_PARAM::N, PPA_PARAM::k);
   server.activate_diff_priv(PPA_PARAM::DIFF_PRIV, PPA_PARAM::SENSITIVITY, PPA_PARAM::EPSILON);
-
-  uint64_t hw = server.keys_from_file(PPA_PARAM::MASKING, PPA_PARAM::NUM_MASKS);
+  server.set_random_matrix(PPA_PARAM::RANDOM_MATRIX);
+  uint64_t hw = server.keys_from_file(PPA_PARAM::MASKING);
 
   if (hw < PPA_PARAM::MIN_HW) {
     std::cout << "Hamming weight is too small! Abort" << std::endl;

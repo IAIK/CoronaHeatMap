@@ -5,7 +5,7 @@ project(PPDA VERSION 3.4.0 LANGUAGES C CXX)
 set(EXECUTABLE main)
 set(CLIENT client)
 set(SERVER server)
-set(CHALLENGE chal)
+set(MASK mask)
 # Executable will be in ../bin
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${PPDA_SOURCE_DIR}/bin)
 
@@ -56,7 +56,7 @@ else()
   )
 endif()
 
-add_executable(${SERVER} server_standalone.cpp)
+add_executable(${SERVER} server_standalone.cpp )
 target_sources(${SERVER}
   PRIVATE
     Server.cpp
@@ -64,8 +64,8 @@ target_sources(${SERVER}
     shake.cpp
 )
 
-add_executable(${CHALLENGE} challenge_demo.cpp)
-target_sources(${CHALLENGE}
+add_executable(${MASK} mask_demo.cpp)
+target_sources(${MASK}
   PRIVATE
     Client.cpp
     Server.cpp
@@ -74,9 +74,9 @@ target_sources(${CHALLENGE}
 )
 
 # Import Microsoft SEAL
-find_package(SEAL 3.4.0 REQUIRED
-    # Optionaly providing a path so this can be built without installing SEAL
-    PATHS ${PPDA_SOURCE_DIR}/SEAL/native/src/cmake
+find_package(SEAL 3.5.9 REQUIRED
+        # Optionaly providing a path so this can be built without installing SEAL
+        PATHS ${PPDA_SOURCE_DIR}/SEAL/cmake
 )
 
 target_link_libraries(${EXECUTABLE} SEAL::seal keccak)
@@ -86,8 +86,7 @@ else()
  target_link_libraries(${CLIENT} SEAL::seal)
 endif()
 target_link_libraries(${SERVER} SEAL::seal keccak)
-target_link_libraries(${CHALLENGE} SEAL::seal keccak)
-
+target_link_libraries(${MASK} SEAL::seal keccak)
 add_custom_target(run
   COMMAND ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/${EXECUTABLE}
   DEPENDS ${EXECUTABLE}
