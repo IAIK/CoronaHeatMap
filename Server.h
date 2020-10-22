@@ -33,6 +33,9 @@ class Server {
     uint64_t slots;
     uint64_t num_plaintexts;
     uint64_t num_ciphertexts;
+
+    std::atomic_uint64_t counter;
+
     uint64_t num_threads = 1;
 
     bool diff_priv = false;
@@ -94,6 +97,8 @@ class Server {
                   uint64_t, uint64_t, Server&);
 
   public:
+    static constexpr const bool VERBOSE = true;
+
     Server(std::shared_ptr<seal::SEALContext> context,
             uint64_t plain_mod, bool use_bsgs = true);
     Server();
@@ -137,4 +142,5 @@ class Server {
     int64_t laplace_round() const;
 
     void activate_mod_switch(bool activate, uint64_t levels_from_last);
+    inline void increment_counter();
 };

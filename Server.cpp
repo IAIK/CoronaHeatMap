@@ -182,7 +182,10 @@ bool Server::compute_internal(std::vector<seal::Ciphertext>& out, uint64_t hw, b
     return false;
 
   std::cout << std::endl;
+  std::cout << "    Total of " << num_ciphertexts * num_plaintexts << " matmuls" << std::endl;
+
   std::vector<Ciphertext> mask;
+  counter = 0;
 
   if (num_threads == 1) {
     if (masking) {
@@ -228,7 +231,7 @@ bool Server::compute_internal(std::vector<seal::Ciphertext>& out, uint64_t hw, b
     }
   }
 
-  std::cout << "    Spawning " << n_threads << " threads, each calculating " << num << " rows..." << std::flush;
+  std::cout << "    Spawning " << n_threads << " threads, each calculating " << num << " rows, total of " << num * num_ciphertexts << " each..." << std::flush;
 
   std::vector<std::thread> threads;
   std::vector<std::vector<Ciphertext>> t_res;
@@ -241,12 +244,13 @@ bool Server::compute_internal(std::vector<seal::Ciphertext>& out, uint64_t hw, b
   std::cout << "...done" << std::endl;
 
   if (masking) {
-    std::cout << "    Computing mask..." << std::flush;
     computeMask(mask, hw);
-    std::cout << "...done" << std::endl;
+    std::cout << "    Computing mask......done" << std::endl;
   }
 
-  std::cout << "    Waiting..." << std::flush;
+  if (!VERBOSE)
+    std::cout << "    Waiting..." << std::flush;
+
   for (auto& t : threads) {
   // If thread Object is Joinable then Join that thread.
     if (t.joinable())
@@ -470,6 +474,14 @@ void Server::computeMask(std::vector<Ciphertext>& mask,
 
 //----------------------------------------------------------------
 
+
+inline void Server::increment_counter() {
+  uint64_t c = ++counter;
+  std::cout << "\r    matmuls done: " << c << std::flush;
+}
+
+//----------------------------------------------------------------
+
 void Server::runner(std::vector<seal::Ciphertext>& out,
             const std::vector<seal::Ciphertext>& in,
             uint64_t start_index,
@@ -485,6 +497,9 @@ void Server::runner(std::vector<seal::Ciphertext>& out,
         server.babystep_giantstep(r, mat);
       else
         server.diagonal(r, mat);
+
+      if (server.VERBOSE)
+        server.increment_counter();
 
       // two results are in the two rows of the ciphertexts
       Ciphertext r_rot;
