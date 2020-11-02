@@ -22,6 +22,8 @@ make
 
 ### Acknowledgements
 
+![Safe-DEED Logo](https://github.com/IAIK/CoronaHeatMap/blob/master/Safe-DEED_logo.png)
+
 This project has received funding from the European Union’s Horizon 2020 research and innovation programme under grant agreement No 825225.
 
 https://safe-deed.eu/
