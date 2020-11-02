@@ -20,6 +20,12 @@ cmake ..
 make
 ```
 
+### Acknowledgements
+
+This project has received funding from the European Union’s Horizon 2020 research and innovation programme under grant agreement No 825225.
+
+https://safe-deed.eu/
+
 ### Citing our work:
 Please use the following BibTeX entry to cite our work in academic papers.
 
