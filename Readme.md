@@ -1,4 +1,4 @@
-# Aggregated PIR for creating a corona heatmap
+# Privately Connecting Mobility to Infectious Diseases via Applied Cryptography
 
 This repository contains the source code of the paper [1,2] by researchers of TU Graz. A current version of the paper is also present in this repository. For more information on the project, visit https://covid-heatmap.iaik.tugraz.at/.
 
@@ -33,7 +33,8 @@ Please use the following BibTeX entry to cite our work in academic papers.
 
 ```tex
 @article{APIR,
-  author    = {Alessandro Bruni and
+  author    = {Alexandros Bampoulidis and
+              Alessandro Bruni and
               Lukas Helminger and
               Daniel Kales and
               Christian Rechberger and
