@@ -201,7 +201,7 @@ bool Server::compute_internal(std::vector<seal::Ciphertext>& out, uint64_t hw, b
       if (diff_priv) {
         std::vector<uint64_t> noise_plain(slots);
         for (uint64_t s = 0; s < slots; s++)
-          noise_plain[i] = laplace_round();
+          noise_plain[s] = laplace_round();
         Plaintext noise;
         encoder.encode(noise_plain, noise);
         evaluator.add_plain_inplace(out[i], noise);
@@ -269,7 +269,7 @@ bool Server::compute_internal(std::vector<seal::Ciphertext>& out, uint64_t hw, b
     if (diff_priv) {
       std::vector<uint64_t> noise_plain(slots);
       for (uint64_t s = 0; s < slots; s++)
-        noise_plain[i] = laplace_round();
+        noise_plain[s] = laplace_round();
       Plaintext noise;
       encoder.encode(noise_plain, noise);
       evaluator.add_plain_inplace(out[i], noise);
