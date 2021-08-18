@@ -7,7 +7,7 @@ extern "C" {
   #include "KeccakHash.h"
 }
 
-extern Keccak_HashInstance shake128;
+extern Keccak_HashInstance shake128_;
 void init_and_seed_shake();
 void init_shake(uint8_t* seed, uint64_t len);
 uint64_t generate_random_field_element_without_0();

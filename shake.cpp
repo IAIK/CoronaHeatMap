@@ -11,7 +11,7 @@
 #endif
 #include <mutex>
 
-Keccak_HashInstance shake128;
+Keccak_HashInstance shake128_;
 std::mutex shake_mutex;
 
 void init_and_seed_shake() {
@@ -39,11 +39,11 @@ void init_and_seed_shake() {
 }
 
 void init_shake(uint8_t *seed, uint64_t len) {
-  if (SUCCESS != Keccak_HashInitialize_SHAKE128(&shake128))
+  if (SUCCESS != Keccak_HashInitialize_SHAKE128(&shake128_))
     perror("failed to init shake");
-  if (SUCCESS != Keccak_HashUpdate(&shake128, seed, len * 8))
+  if (SUCCESS != Keccak_HashUpdate(&shake128_, seed, len * 8))
     perror("SHAKE128 update failed");
-  if (SUCCESS != Keccak_HashFinal(&shake128, NULL))
+  if (SUCCESS != Keccak_HashFinal(&shake128_, NULL))
     perror("SHAKE128 final failed");
 }
 
@@ -54,7 +54,7 @@ uint64_t generate_random_field_element() {
   uint8_t random_bytes[sizeof(uint64_t)];
   while (1) {
     if (SUCCESS !=
-        Keccak_HashSqueeze(&shake128, random_bytes, sizeof(random_bytes) * 8))
+        Keccak_HashSqueeze(&shake128_, random_bytes, sizeof(random_bytes) * 8))
       perror("SHAKE128 squeeze failed");
     uint64_t ele =
         be64toh(*((uint64_t *)random_bytes)) & PPA_PARAM::MAX_PRIME_SIZE;
@@ -79,7 +79,7 @@ uint64_t generate_random_uint64_t() {
   std::lock_guard<std::mutex> guard(shake_mutex);
   uint8_t random_bytes[sizeof(uint64_t)];
     if (SUCCESS !=
-        Keccak_HashSqueeze(&shake128, random_bytes, sizeof(random_bytes) * 8))
+        Keccak_HashSqueeze(&shake128_, random_bytes, sizeof(random_bytes) * 8))
       perror("SHAKE128 squeeze failed");
     uint64_t ele = be64toh(*((uint64_t *)random_bytes));
     return ele;

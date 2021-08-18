@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.12)
 
-project(PPDA VERSION 3.4.0 LANGUAGES C CXX)
+project(PPDA VERSION 3.6.0 LANGUAGES C CXX)
 
 set(EXECUTABLE main)
 set(CLIENT client)
@@ -77,9 +77,9 @@ target_sources(${MASK}
 )
 
 # Import Microsoft SEAL
-find_package(SEAL 3.5.9 REQUIRED
+find_package(SEAL 3.6 REQUIRED
         # Optionaly providing a path so this can be built without installing SEAL
-        PATHS ${PPDA_SOURCE_DIR}/SEAL/cmake
+        PATHS ${PPDA_SOURCE_DIR}/SEAL/build/cmake
 )
 
 target_link_libraries(${EXECUTABLE} SEAL::seal keccak)
@@ -90,6 +90,7 @@ else()
 endif()
 target_link_libraries(${SERVER} SEAL::seal keccak)
 target_link_libraries(${MASK} SEAL::seal keccak)
+
 add_custom_target(run
   COMMAND ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/${EXECUTABLE}
   DEPENDS ${EXECUTABLE}

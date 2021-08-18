@@ -23,7 +23,7 @@ class Client {
 
     seal::GaloisKeys galois_keys;
     seal::SecretKey secret_key;
-    //seal::RelinKeys relin_keys;
+    seal::RelinKeys relin_keys;
 
     seal::Encryptor encryptor;
     seal::Evaluator evaluator;

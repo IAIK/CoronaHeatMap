@@ -9,7 +9,7 @@ using namespace seal;
 //----------------------------------------------------------------
 
 Server::Server(std::shared_ptr<seal::SEALContext> con, uint64_t p_mod, bool bsgs)
-       : context(con), evaluator(context), encoder(context),
+       : context(con), evaluator(*context), encoder(*context),
          plain_mod(p_mod), slots(encoder.slot_count()),
          use_bsgs(bsgs)
 {
@@ -690,7 +690,7 @@ bool Server::ciphers_from_file() {
   try{
     while(true) {
       Ciphertext ct;
-      ct.load(context, c);
+      ct.load(*context, c);
       input.push_back(ct);
     }
   }
@@ -714,7 +714,7 @@ std::shared_ptr<seal::SEALContext> Server::context_from_file(bool sec80) {
   if (sec80) {
     sec = sec_level_type::none;
   }
-  return SEALContext::Create(parms, true, sec);
+  return std::make_shared<seal::SEALContext>(parms, true, sec);
 }
 
 //----------------------------------------------------------------
@@ -723,13 +723,13 @@ uint64_t Server::keys_from_file(bool masking) {
 
   std::ifstream gk;
   gk.open(GK_FILE);
-  galois_keys.load(context, gk);
+  galois_keys.load(*context, gk);
   gk_set = true;
 
   if (masking) {
     std::ifstream rk;
     rk.open(RK_FILE);
-    relin_keys.load(context, rk);
+    relin_keys.load(*context, rk);
     relin_set = true;
   }
 
@@ -756,10 +756,10 @@ void Server::print_parameters() {
   */
   std::string scheme_name;
   switch (context_data.parms().scheme()) {
-  case scheme_type::BFV:
+  case scheme_type::bfv:
     scheme_name = "BFV";
     break;
-  case scheme_type::CKKS:
+  case scheme_type::ckks:
     scheme_name = "CKKS";
     break;
   default:
@@ -787,7 +787,7 @@ void Server::print_parameters() {
   /*
   For the BFV scheme print the plain_modulus parameter.
   */
-  if (context_data.parms().scheme() == scheme_type::BFV) {
+  if (context_data.parms().scheme() == scheme_type::bfv) {
     std::cout << "|   plain_modulus: " << context_data.parms().plain_modulus().value() << std::endl;
   }
 
