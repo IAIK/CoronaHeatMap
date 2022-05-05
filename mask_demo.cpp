@@ -3,14 +3,15 @@
 #include <string>
 #include <vector>
 
-#include "params.h"
-#include "Server.h"
 #include "Client.h"
+#include "Server.h"
+#include "params.h"
 
 using namespace seal;
 
 int main() {
-  auto context = Client::create_context(PPA_PARAM::MOD_DEGREE, PPA_PARAM::PLAIN_MODULUS, PPA_PARAM::sec80);
+  auto context = Client::create_context(
+      PPA_PARAM::MOD_DEGREE, PPA_PARAM::PLAIN_MODULUS, PPA_PARAM::sec80);
 
   std::cout << "Generating keys..." << std::flush;
   Client client(context, PPA_PARAM::PLAIN_MODULUS);
@@ -25,20 +26,16 @@ int main() {
   std::cout << "Reading " << PPA_PARAM::N << " inputs..." << std::flush;
   std::vector<uint64_t> input;
   client.get_input(input);
-  std::cout << "...done" << std:: endl;
+  std::cout << "...done" << std::endl;
 
   //----------------------------------------------------------------
 
-  std::cout << "Encrypting " << client.get_num_plaintexts() << " plaintexts with " << client.get_slots() << " slots each..." << std::flush;
+  std::cout << "Encrypting " << client.get_num_plaintexts()
+            << " plaintexts with " << client.get_slots() << " slots each..."
+            << std::flush;
   std::vector<Ciphertext> ciphs;
-  uint64_t hw = client.encrypt(ciphs, input);
+  client.encrypt(ciphs, input);
   std::cout << "...done" << std::endl;
-  std::cout << "Hamming weight is " << hw << std::endl;
-
-  if (hw < PPA_PARAM::MIN_HW) {
-    std::cout << "Hamming weight is too small! Abort" << std::endl;
-    exit(-1);
-  }
 
   std::cout << "Initial noise:" << std::endl;
   client.print_noise(ciphs);
@@ -61,9 +58,10 @@ int main() {
   std::cout << "Computing mask..." << std::flush;
   std::vector<Ciphertext> mask;
   time_start = std::chrono::high_resolution_clock::now();
-  server.computeMask(mask, hw);
+  server.computeMask(mask);
   time_end = std::chrono::high_resolution_clock::now();
-  time_diff = std::chrono::duration_cast<std::chrono::milliseconds>(time_end - time_start);
+  time_diff = std::chrono::duration_cast<std::chrono::milliseconds>(time_end -
+                                                                    time_start);
   std::cout << "...done" << std::endl;
   std::cout << "Time: " << time_diff.count() << " milliseconds" << std::endl;
 
@@ -81,8 +79,7 @@ int main() {
   bool correct = true;
 
   for (auto el : res) {
-    if (el != 0)
-      correct = false;
+    if (el != 0) correct = false;
   }
 
   if (correct)

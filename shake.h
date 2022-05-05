@@ -4,7 +4,7 @@
 #include <cstdint>
 
 extern "C" {
-  #include "KeccakHash.h"
+#include "KeccakHash.h"
 }
 
 extern Keccak_HashInstance shake128_;
@@ -15,4 +15,4 @@ uint64_t generate_random_field_element();
 uint64_t generate_random_uint64_t();
 double UniformDouble();
 
-#endif // _SHAKE_H_
+#endif  // _SHAKE_H_

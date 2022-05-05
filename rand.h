@@ -14,10 +14,9 @@
 #define GRND_NONBLOCK 0x01
 #define GRND_RANDOM 0x02
 
-#include <unistd.h>
 #include <sys/syscall.h>
-int getrandom(void *buf, size_t buflen, unsigned int flags)
-{
+#include <unistd.h>
+int getrandom(void *buf, size_t buflen, unsigned int flags) {
   return syscall(SYS_getrandom, buf, buflen, flags);
 }
 

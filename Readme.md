@@ -1,19 +1,24 @@
 # Privately Connecting Mobility to Infectious Diseases via Applied Cryptography
 
-This repository contains the source code of the paper [1,2] by researchers of TU Graz. A current version of the paper is also present in this repository. For more information on the project, visit https://covid-heatmap.iaik.tugraz.at/.
+This repository contains the source code of the paper `Privately Connecting Mobility to Infectious Diseases via Applied Cryptography`.
 
-### Source code
-The code is based on Microsoft SEAL (https://github.com/Microsoft/SEAL) and is compatible with Windows and Linux.
-This repository contains a demo application to perform the matrix multiplication on encrypted data and to compute the challenge mask. Use `params.h` for a parametrization of the code.
+## Source code
 
-### Compilation:
+The code is based on Microsoft [SEAL](https://github.com/Microsoft/SEAL) (version 3.6.6) and is compatible with Windows and Linux.
+This repository contains a demo application to perform the matrix multiplication on encrypted data, including the proving mask, noise flooding, and differential privacy. Use `params.h` for a parametrization of the code.
+
+## Compilation
+
 Execute the following commands to compile the source code:
-```
-git submodule update --init
+
+```bash
+git submodule update --init --recursive
 cd SEAL
-cmake .
+mkdir build
+cd build
+cmake ..
 make
-cd ..
+cd ../..
 mkdir build
 cd build
 cmake ..
@@ -26,9 +31,10 @@ make
 
 This project has received funding from the European Union’s Horizon 2020 research and innovation programme under grant agreement No 825225.
 
-https://safe-deed.eu/
+[https://safe-deed.eu/](https://safe-deed.eu/)
 
-### Citing our work:
+### Citing our work
+
 Please use the following BibTeX entry to cite our work in academic papers.
 
 ```tex
@@ -46,6 +52,6 @@ Please use the following BibTeX entry to cite our work in academic papers.
 }
 ```
 
+[1] [https://eprint.iacr.org/2020/522](https://eprint.iacr.org/2020/522)
 
-[1] https://eprint.iacr.org/2020/522 <br/>
-[2] https://arxiv.org/abs/2005.02061
+[2] [https://arxiv.org/abs/2005.02061](https://arxiv.org/abs/2005.02061)

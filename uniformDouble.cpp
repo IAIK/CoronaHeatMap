@@ -14,13 +14,13 @@
 // limitations under the License.
 //
 
-
 // modified from: https://github.com/google/differential-privacy
 
-#include <limits>
 #include <cfloat>
 #include <cmath>
 #include <cstring>
+#include <limits>
+
 #include "shake.h"
 
 int CountLeadingZeros64Slow(uint64_t n) {
@@ -41,7 +41,6 @@ uint64_t Geometric() {
   }
   return result;
 }
-
 
 // We usually expect DBL_MANT_DIG to be 53.
 static_assert(DBL_MANT_DIG < 64,

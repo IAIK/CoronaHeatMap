@@ -1,23 +1,23 @@
+#include <assert.h>
+
+#include <fstream>
 #include <iomanip>
 #include <iostream>
 #include <string>
 #include <vector>
-#include <fstream>
-#include <assert.h>
 
-#include "params.h"
 #include "Client.h"
+#include "params.h"
 
 #ifdef CMP_CLIENT_PLAIN
-  #include "Server.h" // just for plain computation
+#include "Server.h"  // just for plain computation
 #endif
 
 using namespace seal;
 
-
 void enc() {
-
-  auto context = Client::create_context(PPA_PARAM::MOD_DEGREE, PPA_PARAM::PLAIN_MODULUS, PPA_PARAM::sec80, true);
+  auto context = Client::create_context(
+      PPA_PARAM::MOD_DEGREE, PPA_PARAM::PLAIN_MODULUS, PPA_PARAM::sec80, true);
 
   std::cout << "Generating keys..." << std::flush;
   Client client(context, PPA_PARAM::PLAIN_MODULUS, true);
@@ -32,16 +32,17 @@ void enc() {
   std::cout << "Reading " << PPA_PARAM::N << " inputs..." << std::flush;
   std::vector<uint64_t> input;
   client.get_input(input);
-  std::cout << "...done" << std:: endl;
+  std::cout << "...done" << std::endl;
 
   //----------------------------------------------------------------
 
-  std::cout << "Encrypting " << client.get_num_plaintexts() << " plaintexts with " << client.get_slots() << " slots each and write to file..." << std::flush;
+  std::cout << "Encrypting " << client.get_num_plaintexts()
+            << " plaintexts with " << client.get_slots()
+            << " slots each and write to file..." << std::flush;
 
-  uint64_t hw = client.encrypt_to_file(input);
+  client.encrypt_to_file(input);
 
   std::cout << "...done" << std::endl;
-  std::cout << "Hamming weight is " << hw << std::endl;
 }
 
 void dec() {
@@ -57,7 +58,6 @@ void dec() {
   std::cout << std::endl;
   client.set_dimension(PPA_PARAM::N, PPA_PARAM::k);
 
-
   std::cout << "Reading Ciphertext..." << std::flush;
   std::vector<Ciphertext> ciphs;
 
@@ -69,7 +69,6 @@ void dec() {
   std::cout << "Final noise:" << std::endl;
   client.print_noise(ciphs);
   std::cout << "Decrypting " << ciphs.size() << " ciphertexts..." << std::flush;
-
 
   std::vector<uint64_t> res;
   bool ok = client.decrypt(res, ciphs);
@@ -88,26 +87,25 @@ void dec() {
   std::vector<uint64_t> input;
   client.get_input(input);
 
-
   Server server(context, PPA_PARAM::PLAIN_MODULUS, PPA_PARAM::USE_BSGS);
   server.set_num_threads(PPA_PARAM::NUM_THREADS);
   server.set_dimension(PPA_PARAM::N, PPA_PARAM::k);
-  server.set_random_matrix(PPA_PARAM::RANDOM_MATRIX);
 
   std::vector<uint64_t> result_plain;
   time_start = std::chrono::high_resolution_clock::now();
   server.compute_plain(result_plain, input);
   time_end = std::chrono::high_resolution_clock::now();
-  time_diff = std::chrono::duration_cast<std::chrono::milliseconds>(time_end - time_start);
+  time_diff = std::chrono::duration_cast<std::chrono::milliseconds>(time_end -
+                                                                    time_start);
   std::cout << "...done" << std::endl;
   std::cout << "Time: " << time_diff.count() << " milliseconds" << std::endl;
 
-
- //----------------------------------------------------------------
+  //----------------------------------------------------------------
 
   std::cout << "Result:" << std::endl;
   if (res.size() != result_plain.size())
-    std::cout << "sizes differ, should be: " << result_plain.size() << ", is " << res.size() << std::endl;
+    std::cout << "sizes differ, should be: " << result_plain.size() << ", is "
+              << res.size() << std::endl;
 
   bool correct = true;
   for (uint64_t i = 0; i < PPA_PARAM::k; i++) {
@@ -119,9 +117,8 @@ void dec() {
   }
 
   if (correct) {
-      std::cout << "Test passed!" << std::endl;
-  }
-  else
+    std::cout << "Test passed!" << std::endl;
+  } else
     std::cout << "Test failed..." << std::endl;
 
   std::cout << "...done" << std::endl;
@@ -129,7 +126,6 @@ void dec() {
 }
 
 int main(int argc, char *argv[]) {
-
   if (argc != 2) {
     std::cout << "usage: " << argv[0] << " [enc/dec]" << std::endl;
     return 0;

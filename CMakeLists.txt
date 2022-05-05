@@ -6,8 +6,11 @@ set(EXECUTABLE main)
 set(CLIENT client)
 set(SERVER server)
 set(MASK mask)
+set(LINEAR linear)
 # Executable will be in ../bin
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${PPDA_SOURCE_DIR}/bin)
+
+set(CMAKE_CXX_STANDARD 17)
 
 include(CheckCCompilerFlag)
 function(check_c_compiler_flag_and_add flag result)
@@ -39,6 +42,7 @@ target_sources(${EXECUTABLE}
     Server.cpp
     uniformDouble.cpp
     shake.cpp
+    circuit_priv.cpp
 )
 
 add_executable(${CLIENT} client_standalone.cpp)
@@ -50,6 +54,7 @@ if(CMP_CLIENT_PLAIN)
       Server.cpp # just for plain compuation
       uniformDouble.cpp
       shake.cpp
+      circuit_priv.cpp
   )
   add_definitions("-DCMP_CLIENT_PLAIN")
 else()
@@ -65,6 +70,7 @@ target_sources(${SERVER}
     Server.cpp
     uniformDouble.cpp
     shake.cpp
+    circuit_priv.cpp
 )
 
 add_executable(${MASK} mask_demo.cpp)
@@ -74,6 +80,17 @@ target_sources(${MASK}
     Server.cpp
     uniformDouble.cpp
     shake.cpp
+    circuit_priv.cpp
+)
+
+add_executable(${LINEAR} linear.cpp)
+target_sources(${LINEAR}
+  PRIVATE
+    Client.cpp
+    Server.cpp
+    uniformDouble.cpp
+    shake.cpp
+    circuit_priv.cpp
 )
 
 # Import Microsoft SEAL
@@ -90,6 +107,7 @@ else()
 endif()
 target_link_libraries(${SERVER} SEAL::seal keccak)
 target_link_libraries(${MASK} SEAL::seal keccak)
+target_link_libraries(${LINEAR} SEAL::seal keccak)
 
 add_custom_target(run
   COMMAND ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/${EXECUTABLE}

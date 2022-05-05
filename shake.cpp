@@ -1,8 +1,10 @@
 #include "shake.h"
-#include "params.h"
-#include "portable_endian.h"
+
 #include <cstdio>
 #include <cstdlib>
+
+#include "params.h"
+#include "portable_endian.h"
 #ifdef __linux__
 #include "rand.h"
 #elif _WIN32
@@ -15,11 +17,9 @@ Keccak_HashInstance shake128_;
 std::mutex shake_mutex;
 
 void init_and_seed_shake() {
-
   uint8_t seed[16];
 #ifdef __linux__
-  if (getrandom(seed, 16, 0) != 16)
-    perror("failed to get random seed");
+  if (getrandom(seed, 16, 0) != 16) perror("failed to get random seed");
 #elif _WIN32
   HCRYPTPROV p;
 
@@ -58,8 +58,7 @@ uint64_t generate_random_field_element() {
       perror("SHAKE128 squeeze failed");
     uint64_t ele =
         be64toh(*((uint64_t *)random_bytes)) & PPA_PARAM::MAX_PRIME_SIZE;
-    if (ele < PPA_PARAM::PLAIN_MODULUS)
-      return ele;
+    if (ele < PPA_PARAM::PLAIN_MODULUS) return ele;
   }
 }
 
@@ -68,8 +67,7 @@ uint64_t generate_random_field_element() {
 uint64_t generate_random_field_element_without_0() {
   while (1) {
     uint64_t ele = generate_random_field_element();
-    if (ele)
-      return ele;
+    if (ele) return ele;
   }
 }
 
@@ -78,9 +76,9 @@ uint64_t generate_random_field_element_without_0() {
 uint64_t generate_random_uint64_t() {
   std::lock_guard<std::mutex> guard(shake_mutex);
   uint8_t random_bytes[sizeof(uint64_t)];
-    if (SUCCESS !=
-        Keccak_HashSqueeze(&shake128_, random_bytes, sizeof(random_bytes) * 8))
-      perror("SHAKE128 squeeze failed");
-    uint64_t ele = be64toh(*((uint64_t *)random_bytes));
-    return ele;
+  if (SUCCESS !=
+      Keccak_HashSqueeze(&shake128_, random_bytes, sizeof(random_bytes) * 8))
+    perror("SHAKE128 squeeze failed");
+  uint64_t ele = be64toh(*((uint64_t *)random_bytes));
+  return ele;
 }
