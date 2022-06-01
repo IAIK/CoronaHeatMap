@@ -3,9 +3,9 @@
 #include <string>
 #include <vector>
 
-#include "Client.h"
-#include "Server.h"
 #include "params.h"
+#include "src/Client.h"
+#include "src/Server.h"
 
 using namespace seal;
 

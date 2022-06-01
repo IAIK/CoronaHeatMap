@@ -40,8 +40,8 @@ constexpr uint64_t NOISE_FLOODING_BITS = 385;
 
 // Differential privacy
 constexpr bool DIFF_PRIV = false;
-constexpr uint64_t SENSITIVITY = UINT32_MAX;
-constexpr double EPSILON = 1.0;
+constexpr uint64_t SENSITIVITY = UINT32_MAX;  // Depends on dataset!
+constexpr double EPSILON = 1.0;               // Defines the privacy!
 
 }  // namespace PPA_PARAM
 

@@ -5,8 +5,8 @@
 #include <string>
 #include <vector>
 
-#include "Server.h"
 #include "params.h"
+#include "src/Server.h"
 
 using namespace seal;
 

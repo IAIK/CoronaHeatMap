@@ -1,15 +1,15 @@
 # Privately Connecting Mobility to Infectious Diseases via Applied Cryptography
 
-This repository contains the source code of the paper `Privately Connecting Mobility to Infectious Diseases via Applied Cryptography`.
+This repository contains the source code of the paper `Privately Connecting Mobility to Infectious Diseases via Applied Cryptography`. [1, 2]
 
 ## Source code
 
 The code is based on Microsoft [SEAL](https://github.com/Microsoft/SEAL) (version 3.6.6) and is compatible with Windows and Linux.
-This repository contains a demo application to perform the matrix multiplication on encrypted data, including the proving mask, noise flooding, and differential privacy. Use `params.h` for a parametrization of the code.
+This repository contains a demo application (using random data) to perform the matrix multiplication on encrypted data, including the proving mask, noise flooding, and differential privacy. Use `params.h` for a parametrization of the code.
 
 ## Compilation
 
-Execute the following commands to compile the source code:
+Execute the `compile.sh` script (which contains the following commands) to compile the source code:
 
 ```bash
 git submodule update --init --recursive
@@ -17,13 +17,22 @@ cd SEAL
 mkdir build
 cd build
 cmake ..
-make
+make -j 6
 cd ../..
 mkdir build
 cd build
 cmake ..
-make
+make -j 6
 ```
+
+The binaries can then be found in the `bin` folder:
+
+| Executable | Parameter | Description                                                                      |
+|------------|-----------|----------------------------------------------------------------------------------|
+| main       |           | Executes the client and the server                                               |
+| client     | enc       | Creates keys, encrypts an input string, and stores everything on the file system |
+| server     |           | Takes ciphertexts and keys from the file system and executes the protocol        |
+| client     | dec       | Takes ciphertexts from the file system and decrypts the result of the protocol   |
 
 ### Acknowledgements
 

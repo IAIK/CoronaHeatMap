@@ -38,11 +38,11 @@ add_subdirectory(keccak)
 add_executable(${EXECUTABLE} main.cpp)
 target_sources(${EXECUTABLE}
   PRIVATE
-    Client.cpp
-    Server.cpp
-    uniformDouble.cpp
-    shake.cpp
-    circuit_priv.cpp
+    src/Client.cpp
+    src/Server.cpp
+    src/uniformDouble.cpp
+    src/shake.cpp
+    src/circuit_priv.cpp
 )
 
 add_executable(${CLIENT} client_standalone.cpp)
@@ -50,47 +50,47 @@ add_executable(${CLIENT} client_standalone.cpp)
 if(CMP_CLIENT_PLAIN)
   target_sources(${CLIENT}
     PRIVATE
-      Client.cpp
-      Server.cpp # just for plain compuation
-      uniformDouble.cpp
-      shake.cpp
-      circuit_priv.cpp
+      src/Client.cpp
+      src/Server.cpp # just for plain compuation
+      src/uniformDouble.cpp
+      src/shake.cpp
+      src/circuit_priv.cpp
   )
   add_definitions("-DCMP_CLIENT_PLAIN")
 else()
   target_sources(${CLIENT}
   PRIVATE
-    Client.cpp
+    src/Client.cpp
   )
 endif()
 
 add_executable(${SERVER} server_standalone.cpp )
 target_sources(${SERVER}
   PRIVATE
-    Server.cpp
-    uniformDouble.cpp
-    shake.cpp
-    circuit_priv.cpp
+    src/Server.cpp
+    src/uniformDouble.cpp
+    src/shake.cpp
+    src/circuit_priv.cpp
 )
 
 add_executable(${MASK} mask_demo.cpp)
 target_sources(${MASK}
   PRIVATE
-    Client.cpp
-    Server.cpp
-    uniformDouble.cpp
-    shake.cpp
-    circuit_priv.cpp
+    src/Client.cpp
+    src/Server.cpp
+    src/uniformDouble.cpp
+    src/shake.cpp
+    src/circuit_priv.cpp
 )
 
 add_executable(${LINEAR} linear.cpp)
 target_sources(${LINEAR}
   PRIVATE
-    Client.cpp
-    Server.cpp
-    uniformDouble.cpp
-    shake.cpp
-    circuit_priv.cpp
+    src/Client.cpp
+    src/Server.cpp
+    src/uniformDouble.cpp
+    src/shake.cpp
+    src/circuit_priv.cpp
 )
 
 # Import Microsoft SEAL

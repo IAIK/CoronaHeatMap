@@ -6,11 +6,11 @@
 #include <string>
 #include <vector>
 
-#include "Client.h"
 #include "params.h"
+#include "src/Client.h"
 
 #ifdef CMP_CLIENT_PLAIN
-#include "Server.h"  // just for plain computation
+#include "src/Server.h"  // just for plain computation
 #endif
 
 using namespace seal;
