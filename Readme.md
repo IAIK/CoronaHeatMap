@@ -34,6 +34,20 @@ The binaries can then be found in the `bin` folder:
 | server     |           | Takes ciphertexts and keys from the file system and executes the protocol        |
 | client     | dec       | Takes ciphertexts from the file system and decrypts the result of the protocol   |
 
+## Docker
+
+One can use docker to compile and run the code. The following command creates a docker container with the compiled executables being present in the `app` folder:
+
+```bash
+docker build -t heatmap .
+```
+
+Use the following command to get a bash shell inside the `app` folder of the container:
+
+```bash
+docker run -it heatmap
+```
+
 ### Acknowledgements
 
 ![Safe-DEED Logo](https://github.com/IAIK/CoronaHeatMap/blob/master/Safe-DEED_logo.png)
