@@ -69,7 +69,7 @@ constexpr uint64_t PLAIN_MODULUS = 1103311814658949121ULL;  // 60 bit
 constexpr uint64_t MAX_PRIME_SIZE = ((1ULL << 60) - 1);
 
 // Server Mod_Switch
-constexpr uint64_t LEVELS_FROM_LAST = 1;
+constexpr uint64_t LEVELS_FROM_LAST = 0;
 
 // circuit privacy
 constexpr uint64_t NOISE_FLOODING_BITS = 368;
