@@ -9,7 +9,7 @@ This repository contains a demo application (using random data) to perform the m
 
 ## Compilation
 
-Execute the `compile.sh` script (which contains the following commands) to compile the source code:
+Execute the `compile.sh` script (which contains the following commands) to compile the source code (requires `cmake` and `git`):
 
 ```bash
 git submodule update --init --recursive
@@ -29,7 +29,7 @@ The binaries can then be found in the `bin` folder:
 
 | Executable | Parameter | Description                                                                      |
 |------------|-----------|----------------------------------------------------------------------------------|
-| main       |           | Executes the client and the server                                               |
+| main       |           | Executes the whole protocol including the client and the server                                               |
 | client     | enc       | Creates keys, encrypts an input string, and stores everything on the file system |
 | server     |           | Takes ciphertexts and keys from the file system and executes the protocol        |
 | client     | dec       | Takes ciphertexts from the file system and decrypts the result of the protocol   |
@@ -47,6 +47,49 @@ Use the following command to get a bash shell inside the `app` folder of the con
 ```bash
 docker run -it heatmap
 ```
+
+## Benchmarks in the Paper
+
+The benchmarks in the paper create a heatmap for 8 million subscribers and were thus executed on Amazon AWS using a EC2 instance with 96 vCPU's @ 3.6 GHz. To reproduce these benchmarks, modify the values in `params.h` to:
+
+```cpp
+// matrix dimensions
+constexpr uint64_t N = (1ULL << 23); // phone numbers
+constexpr uint64_t k = (1ULL << 15); // cell sites
+
+// Multithreading
+constexpr uint64_t NUM_THREADS = 96;
+```
+
+Additionally, modify the following variables, if you want to use the 60-bit plaintext modulus instead of a 42-bit one:
+
+```cpp
+// BFV parameters
+constexpr uint64_t PLAIN_MODULUS = 1103311814658949121ULL;  // 60 bit
+constexpr uint64_t MAX_PRIME_SIZE = ((1ULL << 60) - 1);
+
+// Server Mod_Switch
+constexpr uint64_t LEVELS_FROM_LAST = 1;
+
+// circuit privacy
+constexpr uint64_t NOISE_FLOODING_BITS = 368;
+```
+
+Then, after compilation, to run the client and the server either run (in the `bin` folder):
+
+```bash
+./main # runs the client and the server and outputs the runtimes and noise budgets
+```
+
+or
+
+```bash
+./client enc # encrypts the input from the client and stores the results on the file system
+./server # gets the client inputs from the file system and executes the protocol. Stores the result on the file system
+./client dec # gets the server output from the file system and decrypts the result.
+```
+
+Both options perform the benchmarks, output the runtimes and noise budgets and should output "Test passed!" if the protocol produces a correct result.
 
 ### Acknowledgements
 
