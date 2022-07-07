@@ -9,7 +9,17 @@ This repository contains a demo application (using random data) to perform the m
 
 ## Compilation
 
-Execute the `compile.sh` script (which contains the following commands) to compile the source code (requires `cmake` and `git`):
+### Requirements
+
+The source code just requires basic building tools (git, make, cmake) to compile. Use the following command to install these packages on Ubuntu:
+
+```bash
+sudo apt install git build-essential cmake
+```
+
+### Compiling Instructions
+
+Execute the `compile.sh` script (which contains the following commands) to compile the source code:
 
 ```bash
 git submodule update --init --recursive
@@ -42,7 +52,7 @@ One can use docker to compile and run the code. The following command creates a 
 docker build -t heatmap .
 ```
 
-Use the following command to get a bash shell inside the `app` folder of the container:
+Use the following command to get a bash shell inside the `app` folder of the container, which contains all executables:
 
 ```bash
 docker run -it heatmap
