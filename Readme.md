@@ -58,6 +58,8 @@ Use the following command to get a bash shell inside the `app` folder of the con
 docker run -it heatmap
 ```
 
+Binaries can then directly be executed from the current folder.
+
 ## Benchmarks in the Paper
 
 The benchmarks in the paper create a heatmap for 8 million subscribers and were thus executed on Amazon AWS using a EC2 instance with 96 vCPU's @ 3.6 GHz. To reproduce these benchmarks, modify the values in `params.h` to:
@@ -85,7 +87,7 @@ constexpr uint64_t LEVELS_FROM_LAST = 0;
 constexpr uint64_t NOISE_FLOODING_BITS = 368;
 ```
 
-Then, after compilation, to run the client and the server either run (in the `bin` folder):
+Then, after compilation, to run the client and the server either run (in the `bin` folder, or directly in the docker):
 
 ```bash
 ./main # runs the client and the server and outputs the runtimes and noise budgets
